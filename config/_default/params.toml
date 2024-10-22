@@ -1,5 +1,6 @@
 #palettes = ["blue", "blue-gray", "indigo"]  (Available Pallets)
 #palette = "indigo" (Default pallete)
+mainSections = ["blogs", "docs"]
 sidebarTaxonomies = ["categories", "tags", "series"]
 comment = false
 [sidebar]
@@ -20,12 +21,13 @@ linkedin = "dheekonda-komal-rao-6bb68727b"
 medium = "s4bot3ur"
 
 [social]
-email = "user@domain.tld"
+email = "s4bot3ur.x.t0r4n4d0@gmail.com"
 github = "s4bot3ur"
 twitter = "s4bot3ur"
 
 [post]
 featuredImage = true
+post.copyright = "false"
 
 [fontSize] # Comment or remove this settings to disable font size switcher.
 extraSmall = ".8rem"
