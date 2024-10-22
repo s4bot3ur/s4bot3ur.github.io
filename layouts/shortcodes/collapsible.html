@@ -1,0 +1,10 @@
+<details style="margin-bottom: 0;">
+    <summary style="cursor: pointer; background-color: #272822; color: #f8f8f2; padding: 0.5em; border-radius: 5px; margin-bottom: 0;">
+        {{ .Get 0 }}
+    </summary>
+    <pre style="background-color: #272822; padding: 1em; border-radius: 5px; overflow: auto; margin-top: 0;">
+        <code class="mermaid" style="color: #f8f8f2; display: block; margin-top: 0; padding-top: 0;">
+{{- .Inner | markdownify | safeHTML -}}
+        </code>
+    </pre>
+</details>

@@ -1,0 +1,34 @@
+#palettes = ["blue", "blue-gray", "indigo"]  (Available Pallets)
+#palette = "indigo" (Default pallete)
+sidebarTaxonomies = ["categories", "tags", "series"]
+comment = false
+[sidebar]
+featuredPosts = true
+recentPosts = false
+
+logo = "/images/logo.webp"
+
+[author]
+name = "Komal Rao"
+avatar = "/images/avatar.png"
+bio = "Web3 Security Researcher"
+company = "Team Bi0s"
+location = "Bharat"
+[author.social]
+github = "s4bot3ur"
+linkedin = "dheekonda-komal-rao-6bb68727b"
+medium = "s4bot3ur"
+
+[social]
+email = "user@domain.tld"
+github = "s4bot3ur"
+twitter = "s4bot3ur"
+
+[post]
+featuredImage = true
+
+[fontSize] # Comment or remove this settings to disable font size switcher.
+extraSmall = ".8rem"
+small = ".9rem"
+large = "1.1rem"
+extraLarge = "1.2rem"

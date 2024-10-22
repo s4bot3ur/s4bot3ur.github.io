@@ -1,0 +1,34 @@
+[[main]]
+identifier = "home"
+name = "Home"
+weight = 1
+url = "/"
+[main.params]
+icon = '<i class="fa-solid fa-house"></i>'
+[[main]]
+identifier = "blog"
+name = "Blog"
+weight = 2
+[main.params]
+icon = '<i class="fas fa-blog"></i>'
+[[main]]
+name = "Categories"
+identifier = "categories"
+url = "/categories/"
+parent = "blog"
+[main.params]
+icon = '<i class="fa-solid fa-folder" style="color: #0581e6;"></i>'
+[[main]]
+name = "Tags"
+identifier = "tags"
+url = "/tags/"
+parent = "blog"
+[main.params]
+icon = '<i class="fa-solid fa-tags" style="color: #B197FC;"></i>'
+[[main]]
+name = "Series"
+identifier = "series"
+url = "/series/"
+parent = "blog"
+[main.params]
+icon = '<i class="fas fa-book" style="color: #FF5733;"></i>'
