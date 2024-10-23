@@ -1,5 +1,6 @@
 #palettes = ["blue", "blue-gray", "indigo"]  (Available Pallets)
 #palette = "indigo" (Default pallete)
+
 mainSections = ["blogs", "docs"]
 sidebarTaxonomies = ["categories", "tags", "series"]
 comment = false
@@ -27,8 +28,7 @@ twitter = "s4bot3ur"
 
 [post]
 featuredImage = true
-post.copyright = "false"
-
+copyright = false
 [fontSize] # Comment or remove this settings to disable font size switcher.
 extraSmall = ".8rem"
 small = ".9rem"

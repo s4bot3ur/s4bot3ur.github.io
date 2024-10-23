@@ -200,6 +200,12 @@
     <loc>http://localhost:1313/blogs/ethernaut/hello-ethernaut/</loc>
     <lastmod>2024-10-23T00:36:58+05:30</lastmod>
   </url><url>
+    <loc>http://localhost:1313/blogs/</loc>
+    <lastmod>2024-10-23T00:36:28+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blogs/ethernaut/</loc>
+    <lastmod>2024-10-23T00:36:09+05:30</lastmod>
+  </url><url>
     <loc>http://localhost:1313/authors/</loc>
   </url>
 </urlset>
