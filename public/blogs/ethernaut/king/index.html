@@ -1,15 +1,15 @@
 <!doctype html>
 <html class="position-relative" itemscope itemtype="https://schema.org/WebPage" lang="en"
   data-bs-theme="auto" data-palette="blue">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><script src="/assets/init/bundle.min.5138f7b1a674d2fcabaf5a713125d285ad4054d47640d3dbe366309d39ff9079.js" integrity="sha256-UTj3saZ00vyrr1pxMSXSha1AVNR2QNPb42YwnTn/kHk=" crossorigin="anonymous"></script>
+  <head><script src="/assets/init/bundle.min.e1691da473a570f286cddf30d19a1ca4bea7b4d2b60094aab2e8c52026ae01f1.js" integrity="sha256-4WkdpHOlcPKGzd8w0ZocpL6ntNK2AJSqsujFICauAfE=" crossorigin="anonymous"></script>
 <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>King - S4b03ur&#39;s Website</title>
-    <link rel="icon" href="/favicon_hu8740105591289948032.png" sizes="16x16" type="image/png">
-    <link rel="icon" href="/favicon_hu17524450719221119378.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="/favicon_hu6335998499482997850.png" sizes="150x150" type="image/png">
-    <link rel="apple-touch-icon" href="/favicon_hu6806785673370764256.png" sizes="180x180" type="image/png">
-    <link rel="icon" href="/favicon_hu1438195731696537491.png" sizes="192x192" type="image/png">
+    <link rel="icon" href="/favicon_hu9840297221141094029.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="/favicon_hu17946760310224212249.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="/favicon_hu7842366266675329608.png" sizes="150x150" type="image/png">
+    <link rel="apple-touch-icon" href="/favicon_hu1999807634487937084.png" sizes="180x180" type="image/png">
+    <link rel="icon" href="/favicon_hu3021165381424674978.png" sizes="192x192" type="image/png">
 <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#6f42c1">
 <meta name="keywords" content="" />
   <meta name="description" content="Writeup for King
@@ -25,7 +25,7 @@ The contract below represents a very simple game: whoever sends an amount of eth
   <meta name="twitter:title" content="King">
   <meta name="twitter:description" content="Writeup for King Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. For each challenge, a contract will be deployed, and an instance will be provided. Your task is to interact with the contract and exploit its vulnerabilities. Don’t worry if you are new to Solidity and have never deployed a smart contract before. You can learn how to deploy a contract using Remix here. Challenge The contract below represents a very simple game: whoever sends an amount of ether that is larger than the current prize becomes the new king. On such an event, the overthrown king gets paid the new prize, making a bit of ether in the process! It’s as ponzi as it gets xD">
       <meta name="twitter:site" content="@s4bot3ur">
-<meta property="og:url" content="http://localhost:1313/blogs/ethernaut/king/">
+<meta property="og:url" content="https://s4bot3ur.github.io/blogs/ethernaut/king/">
   <meta property="og:site_name" content="S4b03ur&#39;s Website">
   <meta property="og:title" content="King">
   <meta property="og:description" content="Writeup for King Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. For each challenge, a contract will be deployed, and an instance will be provided. Your task is to interact with the contract and exploit its vulnerabilities. Don’t worry if you are new to Solidity and have never deployed a smart contract before. You can learn how to deploy a contract using Remix here. Challenge The contract below represents a very simple game: whoever sends an amount of ether that is larger than the current prize becomes the new king. On such an event, the overthrown king gets paid the new prize, making a bit of ether in the process! It’s as ponzi as it gets xD">
@@ -35,13 +35,13 @@ The contract below represents a very simple game: whoever sends an amount of eth
     <meta property="article:published_time" content="2024-10-23T01:03:39+05:30">
     <meta property="article:modified_time" content="2024-10-23T01:03:39+05:30">
     <meta property="article:tag" content="Denial of Service">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/stake/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/higherorder/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/switch/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/gatekeeperthree/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/goodsamaritan/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/doubleentrypoint/">
-      <meta property="og:see_also" content="http://localhost:1313/blogs/ethernaut/puzzlewallet/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/stake/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/higherorder/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/switch/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/gatekeeperthree/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/goodsamaritan/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/doubleentrypoint/">
+      <meta property="og:see_also" content="https://s4bot3ur.github.io/blogs/ethernaut/puzzlewallet/">
 
   <meta itemprop="name" content="King">
   <meta itemprop="description" content="Writeup for King Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. For each challenge, a contract will be deployed, and an instance will be provided. Your task is to interact with the contract and exploit its vulnerabilities. Don’t worry if you are new to Solidity and have never deployed a smart contract before. You can learn how to deploy a contract using Remix here. Challenge The contract below represents a very simple game: whoever sends an amount of ether that is larger than the current prize becomes the new king. On such an event, the overthrown king gets paid the new prize, making a bit of ether in the process! It’s as ponzi as it gets xD">
@@ -49,24 +49,34 @@ The contract below represents a very simple game: whoever sends an amount of eth
   <meta itemprop="dateModified" content="2024-10-23T01:03:39+05:30">
   <meta itemprop="wordCount" content="1126">
   <meta itemprop="keywords" content="Denial of Service">
-  <meta property="og:image" content="http://localhost:1313/images/logo.png"/>
-  <meta name="twitter:image" content="http://localhost:1313/images/logo.png"/>
+  <meta property="og:image" content="https://s4bot3ur.github.io/images/logo.png"/>
+  <meta name="twitter:image" content="https://s4bot3ur.github.io/images/logo.png"/>
   <meta property="og:image:alt" content="King" />
   <meta name="twitter:image:alt" content="King" />
 
-<link data-precache rel="stylesheet" href="/assets/main/bundle.min.a7851eff363a65939b7650262f67612610d4628d298677f1c4fd5537ac44e9da.css" integrity="sha256-p4Ue/zY6ZZObdlAmL2dhJhDUYo0phnfxxP1VN6xE6do=" crossorigin="anonymous">
+<link data-precache rel="stylesheet" href="/assets/main/bundle.min.9d06218c05d95bcde2a81f8af6f25e845ddbae107294fc8a869792d961ca57b5.css" integrity="sha256-nQYhjAXZW83iqB+K9vJehF3brhBylPyKhpeS2WHKV7U=" crossorigin="anonymous">
 
-    <link data-precache rel="stylesheet" href="/assets/viewer/bundle.min.81fc6ea2b654c63ccf8e3c859d12072f72f8cbe3f759361479f8b0c00f754e95.css" integrity="sha256-gfxuorZUxjzPjjyFnRIHL3L4y&#43;P3WTYUefiwwA91TpU=" crossorigin="anonymous">
+    <link data-precache rel="stylesheet" href="/assets/viewer/bundle.min.8c1002839fa22c1350d6ae1eef6593120e108f973c41348be9b5065430566aaf.css" integrity="sha256-jBACg5&#43;iLBNQ1q4e72WTEg4Qj5c8QTSL6bUGVDBWaq8=" crossorigin="anonymous">
 
 
-</head>
+<html lang="en">
+<head></head>
+<body>
+    <script data-goatcounter="https://s4bot3ur.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
+
+
+
+  </head>
   <body><header class="mb-4 sticky-top">
   
 <nav class="top-app-bar shadow navbar navbar-expand-xxl">
   <div class="container">
 <a class="navbar-brand d-flex align-items-center flex-grow-1 flex-xxl-grow-0 justify-content-xxl-start ms-2 ms-xxl-0 mx-auto me-xxl-2"
-    href="http://localhost:1313/">
-    <picture><img class="logo " alt="Logo" src="http://localhost:1313/images/logo.webp?v=7fcbc715dfac30449ed86cb0f85aab0f" loading="lazy" width="400" height="400" />
+    href="https://s4bot3ur.github.io/">
+    <picture><img class="logo " alt="Logo" src="https://s4bot3ur.github.io/images/logo.webp?v=7fcbc715dfac30449ed86cb0f85aab0f" loading="lazy" width="400" height="400" />
 </picture>
 S4b03ur&#39;s Website
 </a>
@@ -79,7 +89,7 @@ S4b03ur&#39;s Website
       <div class="offcanvas-body p-4 pt-0 p-xxl-0">
         <hr class="d-xxl-none">
         <ul class="navbar-nav flex-row flex-wrap align-items-center me-auto"><li class="nav-item col-6 col-xxl-auto">
-            <a class="nav-link py-2 px-0 px-xxl-2" href="http://localhost:1313/">
+            <a class="nav-link py-2 px-0 px-xxl-2" href="https://s4bot3ur.github.io/">
 <span class="menu-icon me-1"><i class="fa-solid fa-house"></i></span>Home
             </a>
           </li>
@@ -92,7 +102,7 @@ S4b03ur&#39;s Website
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownBlog" data-bs-popper="none">
               <li>
                 <a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap"
-                  href="http://localhost:1313/categories/">
+                  href="https://s4bot3ur.github.io/categories/">
                     <span class="dropdown-item-icon me-2 p-2 rounded">
                       <i class="fa-solid fa-folder" style="color: #0581e6;"></i>
                     </span>
@@ -102,7 +112,7 @@ S4b03ur&#39;s Website
               </li>
               <li>
                 <a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap"
-                  href="http://localhost:1313/series/">
+                  href="https://s4bot3ur.github.io/series/">
                     <span class="dropdown-item-icon me-2 p-2 rounded">
                       <i class="fas fa-book" style="color: #FF5733;"></i>
                     </span>
@@ -112,7 +122,7 @@ S4b03ur&#39;s Website
               </li>
               <li>
                 <a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap"
-                  href="http://localhost:1313/tags/">
+                  href="https://s4bot3ur.github.io/tags/">
                     <span class="dropdown-item-icon me-2 p-2 rounded">
                       <i class="fa-solid fa-tags" style="color: #B197FC;"></i>
                     </span>
@@ -281,7 +291,7 @@ S4b03ur&#39;s Website
 
 </header>
 
-    <main class="container has-sidebar" data-kind="page"><script data-precache src="/js/main-init.a8bd62a7850f75212f4328684275dcf2625c07a1905c74e73ec7f2b59e702109.js" integrity="sha256-qL1ip4UPdSEvQyhoQnXc8mJcB6GQXHTnPsfytZ5wIQk=" crossorigin="anonymous"></script>
+    <main class="container has-sidebar" data-kind="page"><script data-precache src="/js/main-init.d0c2c52e496cfed463c8f94bdd43bc2e55191fa8432e33a4d255a6405f3f7d70.js" integrity="sha256-0MLFLkls/tRjyPlL3UO8LlUZH6hDLjOk0lWmQF8/fXA=" crossorigin="anonymous"></script>
 
       <div class="row content"><noscript>
     <div class="alert alert-danger" role="alert">Your browser does not support JavaScript.</div>
@@ -290,7 +300,7 @@ S4b03ur&#39;s Website
 <div class="content-posts col-xxl-8">
   <div class="container"><nav class="row card component" aria-label="breadcrumb">
   <div class="card-body pb-0">
-    <ol class="hbs-breadcrumb breadcrumb flex-nowrap"><li class="breadcrumb-item text-surface"><a href="/">Home</a></li><li class="breadcrumb-item text-surface"><a href="/blogs/">Blogs</a></li><li class="breadcrumb-item text-surface"><a href="/blogs/ethernaut/">Ethernaut</a></li><li class="breadcrumb-item active">King</li></ol>
+    <ol class="hbs-breadcrumb breadcrumb flex-nowrap"><li class="breadcrumb-item text-surface"><a href="/">Home</a></li><li class="breadcrumb-item text-surface"><a href="">Blogs</a></li><li class="breadcrumb-item text-surface"><a href="">Ethernaut</a></li><li class="breadcrumb-item active">King</li></ol>
   </div>
 </nav><div class="post-panel-wrapper position-relative d-flex justify-content-center">
   <div class="d-flex flex-row justify-content-center rounded-5 border post-panel position-fixed px-3 py-1 surface shadow-1">
@@ -504,7 +514,7 @@ S4b03ur&#39;s Website
       </a>
     </div>
     <div class="card-body collapse accordion-collapse accordion-body d-lg-block show" id="profile" aria-labelledby="profile-header">
-      <div class="col-12 d-flex align-items-center justify-content-center"><picture><source srcset="http://localhost:1313/images/avatar.webp" type="image/webp" /><img class="profile-avatar rounded-circle " alt="Komal Rao" src="" loading="lazy" data-viewer-invisible />
+      <div class="col-12 d-flex align-items-center justify-content-center"><picture><source srcset="https://s4bot3ur.github.io/images/avatar.webp" type="image/webp" /><img class="profile-avatar rounded-circle " alt="Komal Rao" src="" loading="lazy" data-viewer-invisible />
 </picture>
 </div>
       <div class="col-12 profile-meta"><div class="profile-name fw-fold fs-lg">Komal Rao</div><div class="profile-bio">Web3 Security Researcher</div><div class="profile-company"><i class="fas fa-fw fa-building"></i>Team Bi0s</div><div class="profile-location"><i class="fas fa-fw fa-map-marker-alt"></i>Bharat</div></div>
@@ -606,7 +616,7 @@ S4b03ur&#39;s Website
                         <a href="/tags/denial-of-service/" class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Denial of Service">
                             Denial of Service
                         </a>
-                        <a href="http://localhost:1313/tags" class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title='ALL'>
+                        <a href="https://s4bot3ur.github.io/tags" class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title='ALL'>
                         ALL
                         <span class="badge badge-sm text-secondary bg-white ms-1">23</span>
                         </a>
@@ -797,11 +807,11 @@ S4b03ur&#39;s Website
   </div>
   <div class="offcanvas-body mt-2"><div class="social-share mb-4 d-flex overflow-auto">
       <a class="btn-social-share d-flex flex-column align-items-center me-3" rel="noopener noreferrer" aria-label="Twitter Share Button"
-      target="_blank" href="https://twitter.com/intent/tweet?title=404%20Page%20not%20found&url=http%3a%2f%2flocalhost%3a1313%2f404.html">
+      target="_blank" href="https://twitter.com/intent/tweet?title=404%20Page%20not%20found&url=https%3a%2f%2fs4bot3ur.github.io%2f404.html">
         <i class="fab fa-2x fa-fw fa-twitter mb-2"></i> Twitter
       </a>
       <a class="btn-social-share d-flex flex-column align-items-center me-3" rel="noopener noreferrer" aria-label="Facebook Share Button"
-        target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2f404.html">
+        target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fs4bot3ur.github.io%2f404.html">
         <i class="fab fa-2x fa-fw fa-facebook-f mb-2"></i> Facebook
       </a>
     </div>
@@ -851,8 +861,8 @@ S4b03ur&#39;s Website
   <div class="col-12 col-lg-8 offset-0 offset-lg-1"></div>
 </div>
 </footer>
-<script data-precache src="/assets/main/bundle.min.5b040d38e7623c0a2c563cb9b8be1cb4711fb6fc9bebd1fd6fca8e2d2b2ca311.js" integrity="sha256-WwQNOOdiPAosVjy5uL4ctHEftvyb69H9b8qOLSssoxE=" crossorigin="anonymous" async></script><script data-precache src="/assets/icons/bundle.min.7f02f62caf99d2c2c73c22ed71512d061f43ae65fc2ff7f6c83e1eb224e20bcf.js" integrity="sha256-fwL2LK&#43;Z0sLHPCLtcVEtBh9DrmX8L/f2yD4esiTiC88=" crossorigin="anonymous" defer></script>
-<script data-precache src="/assets/viewer/bundle.min.a460cc0f5fd49a803ac423e6155c0ae671bb74efd8ffc98eae8f6f246f5038b2.js" integrity="sha256-pGDMD1/UmoA6xCPmFVwK5nG7dO/Y/8mOro9vJG9QOLI=" crossorigin="anonymous" defer></script>
+<script data-precache src="/assets/main/bundle.min.83c148fca0f82cc764fcdfe446b119fba131162b51c753163efeb814175fe9cb.js" integrity="sha256-g8FI/KD4LMdk/N/kRrEZ&#43;6ExFitRx1MWPv64FBdf6cs=" crossorigin="anonymous" async></script><script data-precache src="/assets/icons/bundle.min.f72634cee69eabf9716c1b6c273ad4157e7fade4f44c9cb1a86276f2f0aa5028.js" integrity="sha256-9yY0zuaeq/lxbBtsJzrUFX5/reT0TJyxqGJ28vCqUCg=" crossorigin="anonymous" defer></script>
+<script data-precache src="/assets/viewer/bundle.min.06371891cfe6d10d36cba465c61c4d7cb17591a3be2fd9af4a38444d2074e709.js" integrity="sha256-BjcYkc/m0Q02y6RlxhxNfLF1kaO&#43;L9mvSjhETSB05wk=" crossorigin="anonymous" defer></script>
 
   </body>
 </html>

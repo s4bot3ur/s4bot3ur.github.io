@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>TCP1P-2024 on S4b03ur&#39;s Website</title>
-    <link>http://localhost:1313/series/tcp1p-2024/</link>
+    <link>https://s4bot3ur.github.io/series/tcp1p-2024/</link>
     <description>Recent content in TCP1P-2024 on S4b03ur&#39;s Website</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>Copyright © 2024-2024 s4bot3ur. All Rights Reserved.
 </copyright>
-    <lastBuildDate>Wed, 23 Oct 2024 01:34:05 +0530</lastBuildDate><atom:link href="http://localhost:1313/series/tcp1p-2024/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 23 Oct 2024 01:34:05 +0530</lastBuildDate><atom:link href="https://s4bot3ur.github.io/series/tcp1p-2024/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Unsolvable Money Captcha</title>
-      <link>http://localhost:1313/blogs/tcp1p-2024/unsolvable-money-captcha/</link>
+      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/unsolvable-money-captcha/</link>
       <pubDate>Wed, 23 Oct 2024 01:34:05 +0530</pubDate>
-      <guid>http://localhost:1313/blogs/tcp1p-2024/unsolvable-money-captcha/</guid>
+      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/unsolvable-money-captcha/</guid>
       <description><![CDATA[<h1 id="writeup-for-unsolveable-money-captcha" data-numberify>Writeup for Unsolveable Money Captcha<a class="anchor ms-1" href="#writeup-for-unsolveable-money-captcha"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
@@ -28,9 +28,9 @@ What a silly kid! Let&rsquo;s help her learn how to make a super-duper awesome c
     
     <item>
       <title>Minecraft Huh</title>
-      <link>http://localhost:1313/blogs/tcp1p-2024/minecraft-huh/</link>
+      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/minecraft-huh/</link>
       <pubDate>Wed, 23 Oct 2024 01:32:27 +0530</pubDate>
-      <guid>http://localhost:1313/blogs/tcp1p-2024/minecraft-huh/</guid>
+      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/minecraft-huh/</guid>
       <description><![CDATA[<h1 id="writeup-for-minercraft-huh" data-numberify>Writeup for Minercraft Huh<a class="anchor ms-1" href="#writeup-for-minercraft-huh"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
@@ -46,9 +46,9 @@ The isSolved() function will always return false afterall.</p>]]></description>
     
     <item>
       <title>Inju&#39;s Gambit</title>
-      <link>http://localhost:1313/blogs/tcp1p-2024/injus-gambit/</link>
+      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</link>
       <pubDate>Wed, 23 Oct 2024 01:31:35 +0530</pubDate>
-      <guid>http://localhost:1313/blogs/tcp1p-2024/injus-gambit/</guid>
+      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</guid>
       <description><![CDATA[<h1 id="writeup-for-injus-gambit" data-numberify>Writeup for Inju&rsquo;s Gambit<a class="anchor ms-1" href="#writeup-for-injus-gambit"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
@@ -60,9 +60,9 @@ The isSolved() function will always return false afterall.</p>]]></description>
     
     <item>
       <title>Executive Problem</title>
-      <link>http://localhost:1313/blogs/tcp1p-2024/executive-problem/</link>
+      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/executive-problem/</link>
       <pubDate>Wed, 23 Oct 2024 01:30:42 +0530</pubDate>
-      <guid>http://localhost:1313/blogs/tcp1p-2024/executive-problem/</guid>
+      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/executive-problem/</guid>
       <description><![CDATA[<h1 id="writeup-for-executive-problem" data-numberify>Writeup for Executive Problem<a class="anchor ms-1" href="#writeup-for-executive-problem"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
@@ -222,9 +222,9 @@ The isSolved() function will always return false afterall.</p>]]></description>
     
     <item>
       <title>Baby ERC 20</title>
-      <link>http://localhost:1313/blogs/tcp1p-2024/baby-erc-20/</link>
+      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/baby-erc-20/</link>
       <pubDate>Wed, 23 Oct 2024 01:29:00 +0530</pubDate>
-      <guid>http://localhost:1313/blogs/tcp1p-2024/baby-erc-20/</guid>
+      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/baby-erc-20/</guid>
       <description><![CDATA[<h1 id="writeup-for-baby-erc-20" data-numberify>Writeup for BABY ERC-20<a class="anchor ms-1" href="#writeup-for-baby-erc-20"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
