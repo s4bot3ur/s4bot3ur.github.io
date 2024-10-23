@@ -3,7 +3,7 @@
 
 mainSections = ["blogs", "docs"]
 sidebarTaxonomies = ["categories", "tags", "series"]
-comment = false
+comment = true
 [sidebar]
 featuredPosts = true
 recentPosts = false

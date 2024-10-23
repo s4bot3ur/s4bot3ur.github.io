@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>ERC20 on S4b03ur&#39;s Website</title>
-    <link>https://s4bot3ur.github.io/tags/erc20/</link>
+    <link>http://localhost:1313/tags/erc20/</link>
     <description>Recent content in ERC20 on S4b03ur&#39;s Website</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>Copyright © 2024-2024 s4bot3ur. All Rights Reserved.
 </copyright>
-    <lastBuildDate>Wed, 23 Oct 2024 01:29:00 +0530</lastBuildDate><atom:link href="https://s4bot3ur.github.io/tags/erc20/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 23 Oct 2024 01:29:00 +0530</lastBuildDate><atom:link href="http://localhost:1313/tags/erc20/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Baby ERC 20</title>
-      <link>https://s4bot3ur.github.io/blogs/tcp1p-2024/baby-erc-20/</link>
+      <link>http://localhost:1313/blogs/tcp1p-2024/baby-erc-20/</link>
       <pubDate>Wed, 23 Oct 2024 01:29:00 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/baby-erc-20/</guid>
+      <guid>http://localhost:1313/blogs/tcp1p-2024/baby-erc-20/</guid>
       <description><![CDATA[<h1 id="writeup-for-baby-erc-20" data-numberify>Writeup for BABY ERC-20<a class="anchor ms-1" href="#writeup-for-baby-erc-20"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
@@ -45,9 +45,9 @@
     
     <item>
       <title>Stake</title>
-      <link>https://s4bot3ur.github.io/blogs/ethernaut/stake/</link>
+      <link>http://localhost:1313/blogs/ethernaut/stake/</link>
       <pubDate>Wed, 23 Oct 2024 01:23:11 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/ethernaut/stake/</guid>
+      <guid>http://localhost:1313/blogs/ethernaut/stake/</guid>
       <description><![CDATA[<h1 id="writeup-for-stake" data-numberify>Writeup for Stake<a class="anchor ms-1" href="#writeup-for-stake"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. Each challenge involves deploying a contract and exploiting its vulnerabilities. If you&rsquo;re new to Solidity and haven&rsquo;t deployed a smart contract before, you can learn how to do so using Remix <a href="https://youtu.be/3xNFZI8Ste4?si=i3cWN87OpX85zp6k" target="_blank" rel="noopener noreferrer">here<i class="fas fa-external-link-square-alt ms-1"></i></a>.</li>
@@ -59,9 +59,9 @@
     
     <item>
       <title>GoodSamaritan</title>
-      <link>https://s4bot3ur.github.io/blogs/ethernaut/goodsamaritan/</link>
+      <link>http://localhost:1313/blogs/ethernaut/goodsamaritan/</link>
       <pubDate>Wed, 23 Oct 2024 01:19:59 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/ethernaut/goodsamaritan/</guid>
+      <guid>http://localhost:1313/blogs/ethernaut/goodsamaritan/</guid>
       <description><![CDATA[<h1 id="writeup-for-good-samaritan" data-numberify>Writeup for Good Samaritan<a class="anchor ms-1" href="#writeup-for-good-samaritan"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. Each challenge involves deploying a contract and exploiting its vulnerabilities. If you&rsquo;re new to Solidity and haven&rsquo;t deployed a smart contract before, you can learn how to do so using Remix <a href="https://youtu.be/3xNFZI8Ste4?si=i3cWN87OpX85zp6k" target="_blank" rel="noopener noreferrer">here<i class="fas fa-external-link-square-alt ms-1"></i></a>.</li>
@@ -73,9 +73,9 @@
     
     <item>
       <title>DoubleEntryPoint</title>
-      <link>https://s4bot3ur.github.io/blogs/ethernaut/doubleentrypoint/</link>
+      <link>http://localhost:1313/blogs/ethernaut/doubleentrypoint/</link>
       <pubDate>Wed, 23 Oct 2024 01:19:13 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/ethernaut/doubleentrypoint/</guid>
+      <guid>http://localhost:1313/blogs/ethernaut/doubleentrypoint/</guid>
       <description><![CDATA[<h1 id="writeup-for-doubleentrypoint" data-numberify>Writeup for DoubleEntryPoint<a class="anchor ms-1" href="#writeup-for-doubleentrypoint"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. Each challenge involves deploying a contract and exploiting its vulnerabilities. If you&rsquo;re new to Solidity and haven&rsquo;t deployed a smart contract before, you can learn how to do so using Remix <a href="https://youtu.be/3xNFZI8Ste4?si=i3cWN87OpX85zp6k" target="_blank" rel="noopener noreferrer">here<i class="fas fa-external-link-square-alt ms-1"></i></a>.</li>
@@ -87,9 +87,9 @@
     
     <item>
       <title>NaughtCoin</title>
-      <link>https://s4bot3ur.github.io/blogs/ethernaut/naughtcoin/</link>
+      <link>http://localhost:1313/blogs/ethernaut/naughtcoin/</link>
       <pubDate>Wed, 23 Oct 2024 01:11:24 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/ethernaut/naughtcoin/</guid>
+      <guid>http://localhost:1313/blogs/ethernaut/naughtcoin/</guid>
       <description><![CDATA[<h1 id="writeup-for-naught-coin" data-numberify>Writeup for Naught Coin<a class="anchor ms-1" href="#writeup-for-naught-coin"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity better. Each challenge involves deploying a contract and exploiting its vulnerabilities. If you&rsquo;re new to Solidity and haven&rsquo;t deployed a smart contract before, you can learn how to do so using Remix <a href="https://youtu.be/3xNFZI8Ste4?si=i3cWN87OpX85zp6k" target="_blank" rel="noopener noreferrer">here<i class="fas fa-external-link-square-alt ms-1"></i></a>.</li>
@@ -101,9 +101,9 @@
     
     <item>
       <title>Token</title>
-      <link>https://s4bot3ur.github.io/blogs/ethernaut/token/</link>
+      <link>http://localhost:1313/blogs/ethernaut/token/</link>
       <pubDate>Wed, 23 Oct 2024 00:59:22 +0530</pubDate>
-      <guid>https://s4bot3ur.github.io/blogs/ethernaut/token/</guid>
+      <guid>http://localhost:1313/blogs/ethernaut/token/</guid>
       <description><![CDATA[<h1 id="writeup-for-token" data-numberify>Writeup for Token<a class="anchor ms-1" href="#writeup-for-token"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. Solving the challenges from Ethernaut will help you understand Solidity well. For each challenge, they will deploy the contract and provide us with the instance of that contract. Our task is to interact with the contract and exploit it. Don&rsquo;t worry if you are completely new to Solidity and have never deployed a smart contract before. You can learn how to deploy a contract using Remix <a href="https://youtu.be/3xNFZI8Ste4?si=i3cWN87OpX85zp6k" target="_blank" rel="noopener noreferrer">here<i class="fas fa-external-link-square-alt ms-1"></i></a>.</li>
