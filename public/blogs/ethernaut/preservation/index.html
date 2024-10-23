@@ -1,7 +1,7 @@
 <!doctype html>
 <html class="position-relative" itemscope itemtype="https://schema.org/WebPage" lang="en"
   data-bs-theme="auto" data-palette="blue">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><script src="/assets/init/bundle.min.5138f7b1a674d2fcabaf5a713125d285ad4054d47640d3dbe366309d39ff9079.js" integrity="sha256-UTj3saZ00vyrr1pxMSXSha1AVNR2QNPb42YwnTn/kHk=" crossorigin="anonymous"></script>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><script src="/assets/init/bundle.min.1d27cb6401f651cb9d0d044dd252ae7a2839bbc724eaa706a721623925d29174.js" integrity="sha256-HSfLZAH2UcudDQRN0lKueig5u8ck6qcGpyFiOSXSkXQ=" crossorigin="anonymous"></script>
 <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Preservation - S4b03ur&#39;s Website</title>
@@ -315,7 +315,9 @@ S4b03ur&#39;s Website
   <i class="fas fa-fw fa-list-alt"></i>
 </a>
     
-    
+    <a class="action action-post-comments" href="#post-comments" role="button" aria-label="Comments" title="Comments">
+  <i class="fas fa-fw fa-comments"></i>
+</a>
     
 <a id="sidebarToggler" class="action action-sidebar-toggler d-none d-xxl-block" role="button" title="Toggle sidebar">
   <i class="fas fa-fw fa-expand-alt" data-fa-transform="rotate-45"></i>
@@ -608,7 +610,17 @@ There are two contracts in the challenge: <code>Preservation</code> and <code>Li
           <span class="visually-hidden">Right</span>
         </button>
       </div>
-    </section></div>
+    </section><div class="card component row post-comments" id="post-comments">
+  <div class="card-header">
+    <h2 class="card-title my-2 fs-4 text-surface">Comments</h2>
+  </div>
+  <div class="card-body">
+<div class="giscus"></div>
+
+
+
+</div>
+</div></div>
 </div>
 <aside class="col-xxl-4 sidebar d-flex">
   <div class="container d-flex flex-column">
@@ -916,17 +928,9 @@ There are two contracts in the challenge: <code>Preservation</code> and <code>Li
     </div>
     <button type="button" class="btn-close ms-auto" data-bs-dismiss="offcanvas" data-bs-target="offcanvasActionsPanel" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body mt-2"><div class="social-share mb-4 d-flex overflow-auto">
-      <a class="btn-social-share d-flex flex-column align-items-center me-3" rel="noopener noreferrer" aria-label="Twitter Share Button"
-      target="_blank" href="https://twitter.com/intent/tweet?title=404%20Page%20not%20found&url=http%3a%2f%2flocalhost%3a1313%2f404.html">
-        <i class="fab fa-2x fa-fw fa-twitter mb-2"></i> Twitter
-      </a>
-      <a class="btn-social-share d-flex flex-column align-items-center me-3" rel="noopener noreferrer" aria-label="Facebook Share Button"
-        target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2f404.html">
-        <i class="fab fa-2x fa-fw fa-facebook-f mb-2"></i> Facebook
-      </a>
-    </div>
-    <hr class="mb-4"><div class="actions d-flex overflow-auto align-items-center">
+  <div class="offcanvas-body mt-2">
+    
+    <div class="actions d-flex overflow-auto align-items-center">
       <a role="button" class="action action-go-back d-flex flex-column align-items-center me-3" href="javascript: window.history.back();">
         <span class="action-icon mb-2"><i class="fas fa-2x fa-chevron-circle-down" data-fa-transform="rotate-90"></i></span> Go back
       </a>
@@ -968,8 +972,24 @@ There are two contracts in the challenge: <code>Preservation</code> and <code>Li
   <div class="col-12 col-lg-8 offset-0 offset-lg-1"></div>
 </div>
 </footer>
-<script data-precache src="/assets/main/bundle.min.5b040d38e7623c0a2c563cb9b8be1cb4711fb6fc9bebd1fd6fca8e2d2b2ca311.js" integrity="sha256-WwQNOOdiPAosVjy5uL4ctHEftvyb69H9b8qOLSssoxE=" crossorigin="anonymous" async></script><script data-precache src="/assets/icons/bundle.min.7f02f62caf99d2c2c73c22ed71512d061f43ae65fc2ff7f6c83e1eb224e20bcf.js" integrity="sha256-fwL2LK&#43;Z0sLHPCLtcVEtBh9DrmX8L/f2yD4esiTiC88=" crossorigin="anonymous" defer></script>
+<script data-precache src="/assets/main/bundle.min.0d40524c5d441c076f123c1da214cfef7f617b4fef743f37b363f128cc7b6e33.js" integrity="sha256-DUBSTF1EHAdvEjwdohTP739he0/vdD83s2PxKMx7bjM=" crossorigin="anonymous" async></script><script data-precache src="/assets/icons/bundle.min.7f02f62caf99d2c2c73c22ed71512d061f43ae65fc2ff7f6c83e1eb224e20bcf.js" integrity="sha256-fwL2LK&#43;Z0sLHPCLtcVEtBh9DrmX8L/f2yD4esiTiC88=" crossorigin="anonymous" defer></script>
 <script data-precache src="/assets/viewer/bundle.min.a460cc0f5fd49a803ac423e6155c0ae671bb74efd8ffc98eae8f6f246f5038b2.js" integrity="sha256-pGDMD1/UmoA6xCPmFVwK5nG7dO/Y/8mOro9vJG9QOLI=" crossorigin="anonymous" defer></script>
+<script src="https://giscus.app/client.js"
+    data-repo="s4bot3ur/Blockchain-Challenges"
+    data-repo-id="R_kgDOMw_Cqw"
+    data-category="General"
+    data-category-id="DIC_kwDOMw_Cq84Ci9GY"
+    data-mapping="title"
+    data-reactions-enabled="1"
+    data-emit-metadata="1"
+    data-input-position="top"
+    data-theme="preferred_color_scheme"
+    data-lang="en"
+    data-loading="lazy"
+    crossorigin="anonymous"
+    defer>
+</script>
+
 
   </body>
 </html>

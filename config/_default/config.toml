@@ -1,14 +1,3 @@
 title = "S4b03ur's Website"
 baseURL = "https://s4bot3ur.github.io/"
 copyright = "Copyright © 2024-{year} s4bot3ur. All Rights Reserved."
-
-[giscus]
-repo = "s4bot3ur/Blockchain-Challenges"
-repoId = "R_kgDOMw_Cqw"
-category = "General"
-categoryId = "DIC_kwDOMw_Cq84Ci9GY"
-mapping = "title"
-reactions = true
-metadata = true
-lang = "en"
-inputPosition = "top"
