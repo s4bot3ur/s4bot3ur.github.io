@@ -1,0 +1,13 @@
+baseURL = 'https://s4bot3ur.github.io/'
+languageCode = 'en-us'
+title = 's4bot3ur'
+theme = 'hugo-theme-bootstrap'
+logo = './logo.png'
+
+[build]
+writeStats = true
+[taxonomies]
+author = 'authors'
+category = 'categories'
+series = 'series'
+tag = 'tags'

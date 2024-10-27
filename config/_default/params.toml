@@ -1,0 +1,47 @@
+#palettes = ["blue", "blue-gray", "indigo"]  (Available Pallets)
+#palette = "indigo" (Default pallete)
+
+mainSections = ["blogs", "docs"]
+sidebarTaxonomies = ["categories", "tags", "series"]
+comment = true
+[sidebar]
+featuredPosts = true
+recentPosts = false
+
+logo = "/images/logo.webp"
+
+[author]
+name = "Komal Rao"
+avatar = "/images/avatar.png"
+bio = "Web3 Security Researcher"
+company = "Team Bi0s"
+location = "Bharat"
+[author.social]
+github = "s4bot3ur"
+linkedin = "dheekonda-komal-rao-6bb68727b"
+medium = "s4bot3ur"
+
+[social]
+email = "s4bot3ur.x.t0r4n4d0@gmail.com"
+github = "s4bot3ur"
+twitter = "s4bot3ur"
+
+[post]
+featuredImage = true
+copyright = false
+[fontSize] # Comment or remove this settings to disable font size switcher.
+extraSmall = ".8rem"
+small = ".9rem"
+large = "1.1rem"
+extraLarge = "1.2rem"
+
+[giscus]
+repo = "s4bot3ur/Blockchain-Challenges"
+repoId = "R_kgDOMw_Cqw"
+category = "General"
+categoryId = "DIC_kwDOMw_Cq84Ci9GY"
+mapping = "title"
+reactions = true
+metadata = true
+lang = "en"
+inputPosition = "top"
