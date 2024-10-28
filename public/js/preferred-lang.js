@@ -1,1 +1,0 @@
-(()=>{var o={fallback:"https://s4bot3ur.github.io/",homes:{en:"https://s4bot3ur.github.io/"}};(()=>{let a=navigator.language||navigator.userLanguage;if(a in o.homes){window.location.href=o.homes[a];return}let n=a.split("-");for(let t in o.homes)if(t.indexOf(n[0])===0){window.location.href=o.homes[t];return}window.location.href=o.fallback})();})();
