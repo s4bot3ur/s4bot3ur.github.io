@@ -18,7 +18,7 @@ What a silly kid! Let&rsquo;s help her learn how to make a super-duper awesome c
 The game about mining block after block after block after block&hellip;..</p>
 <p>NOTE!
 You only need to spawn an instance, no need to press the &ldquo;Flag&rdquo; button.
-The isSolved() function will always return false afterall.</p>]]></description></item><item><title>Inju's Gambit</title><link>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</link><pubDate>Wed, 23 Oct 2024 01:31:35 +0530</pubDate><guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</guid><description><![CDATA[<h1 id="writeup-for-injus-gambit" data-numberify>Writeup for Inju&rsquo;s Gambit<a class="anchor ms-1" href="#writeup-for-injus-gambit"></a></h1>
+The isSolved() function will always return false afterall.</p>]]></description></item><item><title>Inju's Gambit</title><link>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</link><pubDate>Wed, 23 Oct 2024 01:31:35 +0530</pubDate><guid>https://s4bot3ur.github.io/blogs/tcp1p-2024/injus-gambit/</guid><description><![CDATA[<h1 id="writeup-for-injus-gambit" data-numberify>Writeup for Injus Gambit<a class="anchor ms-1" href="#writeup-for-injus-gambit"></a></h1>
 <ul>
 <li>Hello h4ck3r, welcome to the world of smart contract hacking. In order to understand this writeup you need to understand foundry.</li>
 </ul>
