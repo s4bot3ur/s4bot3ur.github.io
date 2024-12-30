@@ -1,9 +1,9 @@
 +++
 date = '2024-12-30T10:59:08+05:30'
-draft = true
+draft = false
 title = 'Bank Vault'
 categories=["Blockchain"]
-series="War-Games-CTF"
+series=["War-Games-CTF"]
 tags=["Flash Loans"]
 +++
 

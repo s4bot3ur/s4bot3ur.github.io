@@ -1,9 +1,9 @@
 +++
 date = '2024-12-30T08:39:43+05:30'
-draft = true
+draft = false
 title = 'Guess It'
 categories=["Blockchain"]
-series="War-Games-CTF"
+series=["War-Games-CTF"]
 tags=["Storage Layout"]
 +++
 

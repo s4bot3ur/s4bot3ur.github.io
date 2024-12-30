@@ -1,9 +1,9 @@
 +++
 date = '2024-12-30T07:15:32+05:30'
-draft = true
+draft = false
 title = 'Dungeons and Naga'
 categories=["Blockchain"]
-series="War-Games-CTF"
+series=["War-Games-CTF"]
 tags=["Control Flow Manipulation"]
 +++
 

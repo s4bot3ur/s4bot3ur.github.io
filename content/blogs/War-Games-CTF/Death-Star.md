@@ -1,9 +1,9 @@
 +++
 date = '2024-12-30T09:04:12+05:30'
-draft = true
+draft = false
 title = 'Death Star'
 categories=["Blockchain"]
-series="War-Games-CTF"
+series=["War-Games-CTF"]
 tags=["Reentrancy"]
 +++
 
