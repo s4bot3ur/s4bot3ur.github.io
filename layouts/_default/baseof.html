@@ -1,35 +1,42 @@
 <style>
-  /* Code block styling */
-  pre {
-      position: relative;
-      padding-top: 1.5em; /* Adjust if you want more space between the button and code */
+  /* Make highlight container the positioning reference */
+  .highlight {
+    position: relative;
   }
-
-  /* Copy button styling */
+  
+  /* Make the code block scrollable */
+  pre.chroma {
+    overflow: auto;
+    padding-top: 1.5em;
+  }
+  
+  /* Style the copy button */
   .copy-button {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      padding: 4px 8px;
-      font-size: 12px;
-      background-color: #555; /* Dark background for contrast */
-      color: white; /* White text for readability */
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      opacity: 0.8;
-      transition: opacity 0.3s, background-color 0.3s;
+    position: absolute;
+    top: 8px;
+    right: 20px;
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s, background-color 0.3s;
+    z-index: 10;
   }
-
+  
   .copy-button:hover {
-      opacity: 1;
-      background-color: #333; /* Darker background on hover */
+    opacity: 1;
+    background-color: #333;
   }
-
+  
   .copy-button:active {
-      background-color: #222; /* Slightly different shade on click */
+    background-color: #222;
   }
-</style>
+  </style>
+  
 
 <!doctype html>
 {{- $color := partialCached "functions/color" . }}
@@ -64,22 +71,37 @@
   </body>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('pre').forEach((pre) => {
-            const button = document.createElement('button');
-            button.innerText = 'Copy';
-            button.classList.add('copy-button');
-            pre.appendChild(button);
-
-            button.addEventListener('click', () => {
-                const code = pre.querySelector('code').innerText;
-                navigator.clipboard.writeText(code).then(() => {
-                    button.innerText = 'Copied!';
-                    setTimeout(() => {
-                        button.innerText = 'Copy';
-                    }, 2000);
-                });
-            });
+      document.querySelectorAll('div.highlight').forEach((container) => {
+        const pre = container.querySelector('pre.chroma');
+        
+        // Create the copy button
+        const button = document.createElement('button');
+        button.innerText = 'Copy';
+        button.classList.add('copy-button');
+    
+        // Add the button to the container, NOT inside <pre>
+        container.appendChild(button);
+    
+        button.addEventListener('click', () => {
+          const code = Array.from(pre.querySelectorAll('span.line'))
+            .map(line => {
+              const codePart = line.querySelector('span.cl');
+              return codePart ? codePart.innerText.trimEnd() : '';
+            })
+            .join('\n');
+    
+          navigator.clipboard.writeText(code).then(() => {
+            button.innerText = 'Copied!';
+            setTimeout(() => {
+              button.innerText = 'Copy';
+            }, 2000);
+          });
         });
+      });
     });
-</script>
+    </script>
+    
+  
+  
+  
 </html>
